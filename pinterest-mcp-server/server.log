@@ -1,0 +1,10 @@
+
+> pinterest-mcp-server@1.0.0 start
+> npm run build && node dist/server.js
+
+
+> pinterest-mcp-server@1.0.0 build
+> tsc
+
+[MCP SERVER] Using REAL Pinterest API only
+Pinterest MCP server running on stdio

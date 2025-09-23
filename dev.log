@@ -1,0 +1,28 @@
+
+> tambohack@0.1.0 dev
+> next dev
+
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of /Users/aimar/Documents/pnpm-lock.yaml as the root directory.
+ To silence this warning, set `outputFileTracingRoot` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/output#caveats for more information.
+ Detected additional lockfiles: 
+   * /Users/aimar/Documents/Kitchen/personal/tambohack/package-lock.json
+
+   ▲ Next.js 15.5.2
+   - Local:        http://localhost:3000
+   - Network:      http://192.0.0.2:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1452ms
+ ○ Compiling /api/auth/pinterest/callback ...
+ ✓ Compiled /api/auth/pinterest/callback in 911ms (296 modules)
+ GET /api/auth/pinterest/callback?code=26e36bca35f3b62b180265686b0ab0cf0605add8&state=random-state-string 307 in 1872ms
+ ○ Compiling /chat ...
+ ✓ Compiled /chat in 3.7s (4514 modules)
+ GET /chat 200 in 4331ms
+ ○ Compiling /api/pinterest/boards ...
+ ✓ Compiled /api/pinterest/boards in 528ms (4503 modules)
+ GET /api/pinterest/boards?limit=3 401 in 618ms
+ GET /chat 200 in 164ms

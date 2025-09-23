@@ -1,0 +1,4 @@
+🎨 Pinterest MCP Server running on http://localhost:3001
+📡 SSE endpoint: http://localhost:3001/sse
+🏥 Health check: http://localhost:3001/health
+📌 Using REAL Pinterest API
