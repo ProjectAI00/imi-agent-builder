@@ -13,6 +13,7 @@ import type * as agents_imiAgent from "../agents/imiAgent.js";
 import type * as agents_index from "../agents/index.js";
 import type * as agents_roastAgent from "../agents/roastAgent.js";
 import type * as auth_auth from "../auth/auth.js";
+import type * as auth_betterAuth from "../auth/betterAuth.js";
 import type * as chat_initRoast from "../chat/initRoast.js";
 import type * as chat_messages from "../chat/messages.js";
 import type * as chat_sendMessage from "../chat/sendMessage.js";
@@ -42,6 +43,7 @@ declare const fullApi: ApiFromModules<{
   "agents/index": typeof agents_index;
   "agents/roastAgent": typeof agents_roastAgent;
   "auth/auth": typeof auth_auth;
+  "auth/betterAuth": typeof auth_betterAuth;
   "chat/initRoast": typeof chat_initRoast;
   "chat/messages": typeof chat_messages;
   "chat/sendMessage": typeof chat_sendMessage;

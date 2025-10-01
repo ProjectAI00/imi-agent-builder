@@ -35,14 +35,54 @@ export default defineSchema({
     .index("by_phoneNumber", ["phoneNumber"])
     .index("by_email", ["email"]),
 
-  // Sessions for auth
-  sessions: defineTable({
-    userId: v.string(),
-    token: v.string(),
+  // Better Auth: User table
+  authUsers: defineTable({
+    email: v.string(),
+    emailVerified: v.boolean(),
+    name: v.optional(v.string()),
+    image: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_email", ["email"]),
+
+  // Better Auth: Session table
+  authSessions: defineTable({
+    userId: v.id("authUsers"),
     expiresAt: v.number(),
+    token: v.string(),
+    ipAddress: v.optional(v.string()),
+    userAgent: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
   })
     .index("by_token", ["token"])
     .index("by_userId", ["userId"]),
+
+  // Better Auth: Account table (for OAuth)
+  authAccounts: defineTable({
+    userId: v.id("authUsers"),
+    accountId: v.string(),
+    providerId: v.string(),
+    accessToken: v.optional(v.string()),
+    refreshToken: v.optional(v.string()),
+    expiresAt: v.optional(v.number()),
+    scope: v.optional(v.string()),
+    password: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_userId", ["userId"]),
+
+  // Better Auth: Verification table
+  authVerifications: defineTable({
+    identifier: v.string(),
+    value: v.string(),
+    expiresAt: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_identifier", ["identifier"]),
 
   // Custom thread metadata (extends Agent component's threads)
   threadMetadata: defineTable({
