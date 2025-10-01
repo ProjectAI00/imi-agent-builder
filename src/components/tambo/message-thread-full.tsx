@@ -29,7 +29,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { usePinterestAuth } from "@/hooks/use-auth";
 import type { VariantProps } from "class-variance-authority";
 import * as React from "react";
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { LibraryPanel } from "@/components/pinterest/library-panel";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -69,6 +69,31 @@ export const MessageThreadFull = React.forwardRef<
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const { user, isAuthenticated, signOut, signIn } = usePinterestAuth();
+  
+  // Measure the height of the bottom input bar (when centered)
+  // so the scrollable content gets enough bottom padding and
+  // the last message never hides beneath the input.
+  const inputBarRef = useRef<HTMLDivElement>(null);
+  const [inputBarHeight, setInputBarHeight] = useState(0);
+
+  useEffect(() => {
+    const el = inputBarRef.current;
+    if (!el) return;
+
+    // Use ResizeObserver to track height changes (textarea expansion, toolbar, etc.)
+    const ro = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (entry) {
+        setInputBarHeight(Math.ceil(entry.contentRect.height));
+      }
+    });
+    ro.observe(el);
+
+    // Initialize immediately
+    setInputBarHeight(Math.ceil(el.getBoundingClientRect().height));
+
+    return () => ro.disconnect();
+  }, [sidebarVisible]);
 
   // Determine render mode based on sidebar width
   // Full mode: > 600px (components render in sidebar)
@@ -157,14 +182,24 @@ export const MessageThreadFull = React.forwardRef<
         </div>
       )}
 
-      {/* Main Content Area (content surface with conditional rounded top-left and border when left sidebar is open) */}
+      {/* Main Content Area (match sidebar color and remove white corner) */}
       <div className="flex-1 flex flex-col relative min-w-0 overflow-hidden">
-        <div className={`relative flex flex-col h-full w-full bg-background shadow-sm ${leftSidebarVisible ? 'rounded-tl-3xl border-l border-border' : 'rounded-tl-none border-l-0'}`}>
+        <div className={`relative flex flex-col h-full w-full bg-[var(--sidebar)] ${leftSidebarVisible ? 'rounded-tl-none border-l-0' : 'rounded-tl-none border-l-0'}`}>
         
         {/* Center area: keep mounted to avoid reloading embeds when toggling right sidebar */}
         <div className={cn("flex-1 flex overflow-hidden", centerContent ? "items-stretch justify-stretch" : "items-center justify-center") }>
           <div className={cn("w-full h-full flex flex-col overflow-hidden", centerContent ? "max-w-none" : "max-w-4xl") }>
-            <div className={cn("flex-1 overflow-y-auto overflow-x-hidden p-4", hideMainInput ? "pb-4" : "pb-32") }>
+            <div
+              className={cn("flex-1 overflow-y-auto overflow-x-hidden p-4")}
+              style={{
+                // When the centered input bar is shown (sidebar hidden),
+                // add dynamic padding equal to its height plus a small buffer.
+                paddingBottom:
+                  hideMainInput || sidebarVisible
+                    ? 16 /* 1rem when no centered bar */
+                    : Math.max(inputBarHeight + 16, 96), // ensure at least ~24px margin above a ~72px bar
+              }}
+            >
               {centerContent ? (
                 <div className="w-full h-full">{centerContent}</div>
               ) : (
@@ -184,7 +219,7 @@ export const MessageThreadFull = React.forwardRef<
 
         {/* Input Bar - Absolutely fixed at bottom (only when not hidden) */}
         {!hideMainInput && !sidebarVisible && (
-          <div className="absolute bottom-0 left-0 right-0 bg-background p-2 flex justify-center z-[9999]">
+          <div ref={inputBarRef} className="absolute bottom-0 left-0 right-0 bg-background p-2 flex justify-center z-[9999]">
             <div className="w-full max-w-4xl">
               <MessageInput contextKey={contextKey}>
                 <MessageInputTextarea />

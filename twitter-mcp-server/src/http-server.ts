@@ -359,6 +359,16 @@ app.post('/', async (req, res) => {
                   mergedParams.userId = uidParam ? String(uidParam) : (sn ? await resolveUserId(String(sn)) : undefined);
                 }
                 console.log(`🔁 Remap: ${ep} (alias) -> followingsListV2 (userId=${mergedParams.userId})`);
+              } else if (lower === 'search/tweets' || lower === '/search/tweets') {
+                name = 'search';
+                if (!mergedParams.topicId) mergedParams.topicId = 702;
+                console.log(`🔁 Remap: ${ep} (alias) -> search (topicId=${mergedParams.topicId})`);
+              } else if (lower.includes('direct_messages') || lower.includes('dm')) {
+                // Try to find a working DM endpoint
+                name = 'search'; // Fallback to search for now
+                if (!mergedParams.words) mergedParams.words = 'direct message';
+                if (!mergedParams.topicId) mergedParams.topicId = 702;
+                console.log(`🔁 Remap: ${ep} (DM endpoint - not fully supported) -> search fallback`);
               } else if (name.includes('/')) {
                 throw new McpError(
                   ErrorCode.InvalidRequest,

@@ -48,72 +48,80 @@ export class TwitterAPI {
 
   // Convenience wrappers for common operations (using correct /base/apitools/ endpoints)
   async searchTweets(query: string, count: number = 25, lang?: string) {
-    const internalApiKey = process.env.TWITTER_INTERNAL_API_KEY || this.rapidApiKey;
-    return this.request('GET', '/base/apitools/search', {
-      query: { 
-        words: query,  // Changed from 'query' to 'words'
-        count: Math.min(count, 100),
-        apiKey: internalApiKey,
-        resFormat: 'json',
-        topicId: '702',  // Required parameter from API docs
-        // Removed cursor parameter as it was causing BadRequest error
-        ...(lang && { lang })
-      },
+    return this.callApiTools('search', 'GET', {
+      words: query,
+      count: Math.min(count, 100),
+      topicId: 702,
+      ...(lang && { lang })
     });
   }
 
   async getTweet(tweetId: string) {
-    return this.request('GET', '/1.1/statuses/show.json', {
-      query: { id: tweetId, tweet_mode: 'extended' },
+    // Use search to find tweet by ID (since tweetDetails doesn't exist)
+    return this.callApiTools('search', 'GET', {
+      words: `conversation_id:${tweetId}`,
+      count: 1,
+      topicId: 702
     });
   }
 
   async getUserByUsername(username: string) {
-    return this.request('GET', '/1.1/users/show.json', {
-      query: { screen_name: username },
+    // Use search to get user info by username
+    return this.callApiTools('search', 'GET', {
+      words: `from:${username}`,
+      count: 1,
+      topicId: 702
     });
   }
 
   async getUserTweets(params: { userId?: string; username?: string; count?: number }) {
     const { userId, username, count = 25 } = params;
-    return this.request('GET', '/1.1/statuses/user_timeline.json', {
-      query: {
-        user_id: userId,
-        screen_name: username,
-        count: Math.min(count, 200),
-        tweet_mode: 'extended',
-      },
-    });
+    
+    if (username) {
+      // Use search with from: operator to get user tweets
+      return this.callApiTools('search', 'GET', {
+        words: `from:${username}`,
+        count: Math.min(count, 100),
+        topicId: 702
+      });
+    } else if (userId) {
+      // First need to resolve userId to username, then search
+      // For now, use search with user_id context if possible
+      return this.callApiTools('search', 'GET', {
+        words: `from_user_id:${userId}`,
+        count: Math.min(count, 100),
+        topicId: 702
+      });
+    } else {
+      throw new Error('Either userId or username must be provided');
+    }
   }
 
   async sendTweet(status: string) {
-    // Some providers accept query params; we default to body JSON
-    return this.request('POST', '/1.1/statuses/update.json', {
-      body: { status },
-    });
+    // Note: tweet endpoint doesn't exist, may need to use a different endpoint
+    // This would need to be tested with the correct endpoint name
+    throw new Error('Send tweet functionality not yet implemented - need to discover correct endpoint');
   }
 
   async followUser(params: { userId?: string; username?: string }) {
     const { userId, username } = params;
-    return this.request('POST', '/1.1/friendships/create.json', {
-      body: { user_id: userId, screen_name: username, follow: true },
-    });
+    
+    if (userId) {
+      return this.callApiTools('follow', 'POST', {
+        userId: userId
+      }, { includeAuth: true });
+    } else if (username) {
+      return this.callApiTools('follow', 'POST', {
+        username: username
+      }, { includeAuth: true });
+    } else {
+      throw new Error('Either userId or username must be provided');
+    }
   }
 
   async sendDM(params: { senderId: string; recipientId: string; text: string }) {
-    const { senderId, recipientId, text } = params;
-    // v1.1 DM events shape
-    const event = {
-      event: {
-        type: 'message_create',
-        message_create: {
-          target: { recipient_id: recipientId },
-          sender_id: senderId,
-          message_data: { text },
-        },
-      },
-    };
-    return this.request('POST', '/1.1/direct_messages/events/new.json', { body: event });
+    // Note: sendMessage endpoint not confirmed to exist
+    throw new Error('Send DM functionality not yet implemented - need to discover correct endpoint');
   }
 
   /**
@@ -122,7 +130,7 @@ export class TwitterAPI {
    * Optionally include auth_token and ct0 for write/privileged endpoints.
    */
   async callApiTools<T = any>(endpoint: string, method: HttpMethod = 'GET', params: Record<string, any> = {}, options?: { includeAuth?: boolean, apiKeyOverride?: string, authToken?: string, ct0?: string }) {
-    const apiKey = options?.apiKeyOverride || process.env.RAPIDAPI_TWITTER_APIKEY || process.env.TWITTER_INTERNAL_API_KEY || params.apiKey;
+    const apiKey = options?.apiKeyOverride || process.env.RAPIDAPI_TWITTER_APIKEY || process.env.TWITTER_INTERNAL_API_KEY || params.apiKey || this.rapidApiKey;
     const authToken = options?.authToken || process.env.TWITTER_AUTH_TOKEN;
     const ct0 = options?.ct0 || process.env.TWITTER_CT0;
 
@@ -130,7 +138,10 @@ export class TwitterAPI {
       resFormat: 'json',
       ...params,
     };
+    
+    // Always include API key if available
     if (apiKey) query.apiKey = apiKey;
+    
     if (options?.includeAuth) {
       if (authToken) query.auth_token = authToken;
       if (ct0) query.ct0 = ct0;
@@ -140,5 +151,105 @@ export class TwitterAPI {
     // Most providers expect empty JSON body for POST when all params are query
     const body = method === 'POST' && !('body' in params) ? {} : undefined;
     return this.request<T>(method, path, { query, body });
+  }
+
+  /**
+   * Batch multiple API calls in parallel for significant speed improvement
+   * Returns results in same order as requests, with null for failed calls
+   */
+  async batchApiCalls<T = any>(requests: Array<{
+    endpoint: string;
+    method?: HttpMethod;
+    params?: Record<string, any>;
+    options?: { includeAuth?: boolean, apiKeyOverride?: string, authToken?: string, ct0?: string };
+  }>): Promise<Array<T | null>> {
+    const promises = requests.map(async (req, index) => {
+      try {
+        const result = await this.callApiTools<T>(
+          req.endpoint,
+          req.method || 'GET',
+          req.params || {},
+          req.options
+        );
+        return result;
+      } catch (error) {
+        console.error(`[BATCH] Request ${index} failed for endpoint ${req.endpoint}:`, error);
+        return null;
+      }
+    });
+
+    return Promise.all(promises);
+  }
+
+  /**
+   * Get multiple users' profiles in parallel (much faster than sequential calls)
+   */
+  async getUserProfilesBatch(usernames: string[]): Promise<Array<any | null>> {
+    const requests = usernames.map(username => ({
+      endpoint: 'search',
+      params: {
+        words: `from:${username}`,
+        count: 1,
+        topicId: 702
+      }
+    }));
+
+    return this.batchApiCalls(requests);
+  }
+
+  /**
+   * Get multiple users' timelines in parallel
+   */
+  async getUserTimelinesBatch(users: Array<{ userId?: string; username?: string; count?: number }>): Promise<Array<any | null>> {
+    const requests = users.map(user => {
+      const { userId, username, count = 25 } = user;
+      
+      if (username) {
+        return {
+          endpoint: 'search',
+          params: {
+            words: `from:${username}`,
+            count: Math.min(count, 100),
+            topicId: 702
+          }
+        };
+      } else if (userId) {
+        return {
+          endpoint: 'userTimeline',
+          params: {
+            userId,
+            count: Math.min(count, 100)
+          }
+        };
+      } else {
+        throw new Error('Either userId or username must be provided');
+      }
+    });
+
+    return this.batchApiCalls(requests);
+  }
+
+  /**
+   * Get followers for multiple users in parallel
+   */
+  async getFollowersBatch(userIds: string[], count: number = 20): Promise<Array<any | null>> {
+    const requests = userIds.map(userId => ({
+      endpoint: 'followersListV2',
+      params: { userId, count }
+    }));
+
+    return this.batchApiCalls(requests);
+  }
+
+  /**
+   * Get following lists for multiple users in parallel
+   */
+  async getFollowingBatch(userIds: string[], count: number = 20): Promise<Array<any | null>> {
+    const requests = userIds.map(userId => ({
+      endpoint: 'followingsListV2',
+      params: { userId, count }
+    }));
+
+    return this.batchApiCalls(requests);
   }
 }

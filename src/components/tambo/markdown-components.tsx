@@ -226,7 +226,7 @@ export const createMarkdownComponents = (): Components => ({
    * Horizontal rule component
    * Creates a visual divider with proper spacing
    */
-  hr: () => <hr className="my-4 border-muted" />,
+  hr: () => null,
 
   /**
    * Table container component

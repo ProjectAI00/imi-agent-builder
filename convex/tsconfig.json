@@ -1,0 +1,17 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": ["node"],
+    "jsx": "react-jsx",
+    "lib": ["ES2021", "DOM"],
+    "target": "ES2021",
+    "strict": true,
+    "skipLibCheck": true,
+    "paths": {
+      "@/*": ["../src/*"]
+    }
+  },
+  "include": ["./**/*"]
+}

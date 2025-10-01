@@ -90,42 +90,136 @@ const server = new Server(
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
-      { name: 'twitter_communities_call', description: 'Call Twitter_Communities_api_tools endpoint under /base/apitools/*', inputSchema: { type: 'object', properties: { endpoint: { type: 'string' }, method: { type: 'string', enum: ['GET','POST'], default: 'GET' }, params: { type: 'object', additionalProperties: true }, includeAuth: { type: 'boolean' }, apiKeyOverride: { type: 'string' }, authToken: { type: 'string' }, ct0: { type: 'string' } }, required: ['endpoint'] } },
-      { name: 'twitter_dms_call', description: 'Call Twitter_DMS_api_tools endpoint under /base/apitools/*', inputSchema: { type: 'object', properties: { endpoint: { type: 'string' }, method: { type: 'string', enum: ['GET','POST'], default: 'POST' }, params: { type: 'object', additionalProperties: true }, includeAuth: { type: 'boolean' }, apiKeyOverride: { type: 'string' }, authToken: { type: 'string' }, ct0: { type: 'string' } }, required: ['endpoint'] } },
-      { name: 'twitter_follows_call', description: 'Call Twitter_Follows_api_tools endpoint under /base/apitools/*', inputSchema: { type: 'object', properties: { endpoint: { type: 'string' }, method: { type: 'string', enum: ['GET','POST'], default: 'POST' }, params: { type: 'object', additionalProperties: true }, includeAuth: { type: 'boolean' }, apiKeyOverride: { type: 'string' }, authToken: { type: 'string' }, ct0: { type: 'string' } }, required: ['endpoint'] } },
-      { name: 'twitter_notifications_call', description: 'Call Twitter_Get_Notifications_api_tools endpoint under /base/apitools/*', inputSchema: { type: 'object', properties: { endpoint: { type: 'string' }, method: { type: 'string', enum: ['GET','POST'], default: 'GET' }, params: { type: 'object', additionalProperties: true }, includeAuth: { type: 'boolean' }, apiKeyOverride: { type: 'string' }, authToken: { type: 'string' }, ct0: { type: 'string' } }, required: ['endpoint'] } },
-      { name: 'twitter_get_twees_call', description: 'Call Twitter_Get_Twees_api_tools endpoint under /base/apitools/*', inputSchema: { type: 'object', properties: { endpoint: { type: 'string' }, method: { type: 'string', enum: ['GET','POST'], default: 'GET' }, params: { type: 'object', additionalProperties: true }, includeAuth: { type: 'boolean' }, apiKeyOverride: { type: 'string' }, authToken: { type: 'string' }, ct0: { type: 'string' } }, required: ['endpoint'] } },
-      { name: 'twitter_lists_call', description: 'Call Twitter_List_api_tools endpoint under /base/apitools/*', inputSchema: { type: 'object', properties: { endpoint: { type: 'string' }, method: { type: 'string', enum: ['GET','POST'], default: 'GET' }, params: { type: 'object', additionalProperties: true }, includeAuth: { type: 'boolean' }, apiKeyOverride: { type: 'string' }, authToken: { type: 'string' }, ct0: { type: 'string' } }, required: ['endpoint'] } },
-      { name: 'twitter_login_get_token_call', description: 'Call Twitter_LoginGetToken_api_tools endpoint under /base/apitools/*', inputSchema: { type: 'object', properties: { endpoint: { type: 'string' }, method: { type: 'string', enum: ['GET','POST'], default: 'POST' }, params: { type: 'object', additionalProperties: true }, includeAuth: { type: 'boolean' }, apiKeyOverride: { type: 'string' }, authToken: { type: 'string' }, ct0: { type: 'string' } }, required: ['endpoint'] } },
-      { name: 'twitter_search_call', description: 'Call Twitter_Search_api_tools endpoint under /base/apitools/*', inputSchema: { type: 'object', properties: { endpoint: { type: 'string' }, method: { type: 'string', enum: ['GET','POST'], default: 'GET' }, params: { type: 'object', additionalProperties: true }, includeAuth: { type: 'boolean' }, apiKeyOverride: { type: 'string' }, authToken: { type: 'string' }, ct0: { type: 'string' } }, required: ['endpoint'] } },
-      { name: 'twitter_send_twees_call', description: 'Call Twitter_Send_Twees_api_tools endpoint under /base/apitools/*', inputSchema: { type: 'object', properties: { endpoint: { type: 'string' }, method: { type: 'string', enum: ['GET','POST'], default: 'POST' }, params: { type: 'object', additionalProperties: true }, includeAuth: { type: 'boolean' }, apiKeyOverride: { type: 'string' }, authToken: { type: 'string' }, ct0: { type: 'string' } }, required: ['endpoint'] } },
-      { name: 'twitter_users_call', description: 'Call Twitter_Users_api_tools endpoint under /base/apitools/*', inputSchema: { type: 'object', properties: { endpoint: { type: 'string' }, method: { type: 'string', enum: ['GET','POST'], default: 'GET' }, params: { type: 'object', additionalProperties: true }, includeAuth: { type: 'boolean' }, apiKeyOverride: { type: 'string' }, authToken: { type: 'string' }, ct0: { type: 'string' } }, required: ['endpoint'] } },
       {
         name: 'call_twitter_apitools',
-        description: 'Generic call for /base/apitools/* endpoints. Examples: followers → endpoint "users/followers" with { username, count } OR "/users/by/username/<name>/followers" with { count }',
+        description: 'Generic call for /base/apitools/* endpoints. Use specific endpoint names like: search, followersListV2, followingsListV2, followersIds, followingsIds, follow, unfollow',
         inputSchema: {
           type: 'object',
           additionalProperties: true,
           properties: {
-            endpoint: { type: 'string' },
+            endpoint: { 
+              type: 'string',
+              description: 'Endpoint name (e.g., search, followersListV2, followingsListV2, followersIds, followingsIds, follow, unfollow)'
+            },
             method: { type: 'string', enum: ['GET','POST'], default: 'GET' },
-            params: { type: 'object', additionalProperties: true, properties: { username: { type: 'string' }, screen_name: { type: 'string' }, userId: { type: 'string' }, user_id: { type: 'string' }, count: { type: 'number' }, cursor: { type: 'string' }, words: { type: 'string' }, topicId: { type: 'number' } } },
-            includeAuth: { type: 'boolean', default: false },
-            apiKeyOverride: { type: 'string' },
-            authToken: { type: 'string' },
-            ct0: { type: 'string' },
-            username: { type: 'string' },
-            screen_name: { type: 'string' },
-            userId: { type: 'string' },
-            user_id: { type: 'string' },
-            count: { type: 'number' },
-            cursor: { type: 'string' },
-            words: { type: 'string' },
-            topicId: { type: 'number' },
+            params: { 
+              type: 'object', 
+              additionalProperties: true,
+              properties: { 
+                username: { type: 'string', description: 'Twitter username' }, 
+                userId: { type: 'string', description: 'Twitter user ID' }, 
+                count: { type: 'number', description: 'Number of results to return' }, 
+                cursor: { type: 'string', description: 'Pagination cursor' }, 
+                words: { type: 'string', description: 'Search query (e.g., from:username)' }, 
+                topicId: { type: 'number', description: 'Topic ID (usually 702 for general searches)' },
+                resFormat: { type: 'string', description: 'Response format (usually json)' },
+                apiKey: { type: 'string', description: 'Internal API key override' }
+              } 
+            },
+            includeAuth: { type: 'boolean', default: false, description: 'Include authentication for write operations' },
+            apiKeyOverride: { type: 'string', description: 'Override API key' },
+            authToken: { type: 'string', description: 'Auth token for write operations' },
+            ct0: { type: 'string', description: 'CSRF token' },
           },
           required: ['endpoint'],
         },
       },
+      {
+        name: 'twitter_search',
+        description: 'Search for tweets and users. Use words like "from:username" to get user tweets, or general search terms.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            words: { type: 'string', description: 'Search query (e.g., "from:elonmusk", "bitcoin", etc.)' },
+            count: { type: 'number', default: 25, minimum: 1, maximum: 100, description: 'Number of results' },
+            topicId: { type: 'number', default: 702, description: 'Topic ID for search context' },
+            lang: { type: 'string', description: 'Language code (optional)' }
+          },
+          required: ['words']
+        }
+      },
+      {
+        name: 'twitter_get_followers',
+        description: 'Get followers list for a user (returns full user objects)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            userId: { type: 'string', description: 'Twitter user ID' },
+            count: { type: 'number', default: 20, minimum: 1, maximum: 200, description: 'Number of followers to return' },
+            cursor: { type: 'string', description: 'Pagination cursor for next page' }
+          },
+          required: ['userId']
+        }
+      },
+      {
+        name: 'twitter_get_following',
+        description: 'Get following list for a user (returns full user objects)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            userId: { type: 'string', description: 'Twitter user ID' },
+            count: { type: 'number', default: 20, minimum: 1, maximum: 200, description: 'Number of following to return' },
+            cursor: { type: 'string', description: 'Pagination cursor for next page' }
+          },
+          required: ['userId']
+        }
+      },
+      {
+        name: 'twitter_get_follower_ids',
+        description: 'Get follower IDs only (lightweight, faster)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            userId: { type: 'string', description: 'Twitter user ID' },
+            count: { type: 'number', default: 100, minimum: 1, maximum: 5000, description: 'Number of IDs to return' },
+            cursor: { type: 'string', description: 'Pagination cursor for next page' }
+          },
+          required: ['userId']
+        }
+      },
+      {
+        name: 'twitter_get_following_ids',
+        description: 'Get following IDs only (lightweight, faster)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            userId: { type: 'string', description: 'Twitter user ID' },
+            count: { type: 'number', default: 100, minimum: 1, maximum: 5000, description: 'Number of IDs to return' },
+            cursor: { type: 'string', description: 'Pagination cursor for next page' }
+          },
+          required: ['userId']
+        }
+      },
+      {
+        name: 'twitter_follow_user',
+        description: 'Follow a user (requires authentication)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            userId: { type: 'string', description: 'Twitter user ID to follow' },
+            username: { type: 'string', description: 'Twitter username to follow (alternative to userId)' }
+          },
+          anyOf: [
+            { required: ['userId'] },
+            { required: ['username'] }
+          ]
+        }
+      },
+      {
+        name: 'twitter_unfollow_user',
+        description: 'Unfollow a user (requires authentication)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            userId: { type: 'string', description: 'Twitter user ID to unfollow' },
+            username: { type: 'string', description: 'Twitter username to unfollow (alternative to userId)' }
+          },
+          anyOf: [
+            { required: ['userId'] },
+            { required: ['username'] }
+          ]
+        }
+      }
     ],
   };
 });
@@ -135,6 +229,70 @@ server.setRequestHandler(CallToolRequestSchema, async (request: CallToolRequest)
     const { name, arguments: args } = request.params;
     switch (name) {
       
+      case 'twitter_search': {
+        const { words, count = 25, topicId = 702, lang } = args as any;
+        const res = await twitterAPI.callApiTools('search', 'GET', {
+          words,
+          count: Math.min(count, 100),
+          topicId,
+          ...(lang && { lang })
+        });
+        return { content: [{ type: 'text', text: JSON.stringify(res, null, 2) }] };
+      }
+
+      case 'twitter_get_followers': {
+        const { userId, count = 20, cursor } = args as any;
+        const res = await twitterAPI.callApiTools('followersListV2', 'GET', {
+          userId,
+          count: Math.min(count, 200),
+          ...(cursor && { cursor })
+        });
+        return { content: [{ type: 'text', text: JSON.stringify(res, null, 2) }] };
+      }
+
+      case 'twitter_get_following': {
+        const { userId, count = 20, cursor } = args as any;
+        const res = await twitterAPI.callApiTools('followingsListV2', 'GET', {
+          userId,
+          count: Math.min(count, 200),
+          ...(cursor && { cursor })
+        });
+        return { content: [{ type: 'text', text: JSON.stringify(res, null, 2) }] };
+      }
+
+      case 'twitter_get_follower_ids': {
+        const { userId, count = 100, cursor } = args as any;
+        const res = await twitterAPI.callApiTools('followersIds', 'GET', {
+          userId,
+          count: Math.min(count, 5000),
+          ...(cursor && { cursor })
+        });
+        return { content: [{ type: 'text', text: JSON.stringify(res, null, 2) }] };
+      }
+
+      case 'twitter_get_following_ids': {
+        const { userId, count = 100, cursor } = args as any;
+        const res = await twitterAPI.callApiTools('followingsIds', 'GET', {
+          userId,
+          count: Math.min(count, 5000),
+          ...(cursor && { cursor })
+        });
+        return { content: [{ type: 'text', text: JSON.stringify(res, null, 2) }] };
+      }
+
+      case 'twitter_follow_user': {
+        const { userId, username } = args as any;
+        const params = userId ? { userId } : { username };
+        const res = await twitterAPI.callApiTools('follow', 'POST', params, { includeAuth: true });
+        return { content: [{ type: 'text', text: JSON.stringify(res, null, 2) }] };
+      }
+
+      case 'twitter_unfollow_user': {
+        const { userId, username } = args as any;
+        const params = userId ? { userId } : { username };
+        const res = await twitterAPI.callApiTools('unfollow', 'POST', params, { includeAuth: true });
+        return { content: [{ type: 'text', text: JSON.stringify(res, null, 2) }] };
+      }
       
       case 'call_twitter_apitools': {
         const parsed = CallApiToolsArgsSchema.parse(args) as any;
@@ -244,23 +402,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request: CallToolRequest)
         }
 
         const res = await mapAndCall(endpoint, method, mergedParams || {});
-        return { content: [{ type: 'text', text: JSON.stringify(res, null, 2) }] };
-      }
-      case 'twitter_communities_call':
-      case 'twitter_dms_call':
-      case 'twitter_follows_call':
-      case 'twitter_notifications_call':
-      case 'twitter_get_twees_call':
-      case 'twitter_lists_call':
-      case 'twitter_login_get_token_call':
-      case 'twitter_search_call':
-      case 'twitter_send_twees_call':
-      case 'twitter_users_call': {
-        const { endpoint, method, params, includeAuth, apiKeyOverride, authToken, ct0 } = CallApiToolsArgsSchema.parse(args);
-        // default includeAuth for common write categories if not provided
-        const needsAuth = ['twitter_dms_call','twitter_follows_call','twitter_send_twees_call'].includes(name);
-        const effectiveIncludeAuth = includeAuth ?? needsAuth;
-        const res = await twitterAPI.callApiTools(endpoint, method, params || {}, { includeAuth: effectiveIncludeAuth, apiKeyOverride, authToken, ct0 });
         return { content: [{ type: 'text', text: JSON.stringify(res, null, 2) }] };
       }
       default:
