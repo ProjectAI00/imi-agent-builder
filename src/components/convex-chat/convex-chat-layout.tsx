@@ -69,7 +69,7 @@ export function ConvexChatLayout({
         <div className="relative flex flex-col h-full w-full bg-[var(--sidebar)] rounded-tl-3xl">
           {/* Messages (center column, limited width) */}
           <div className="flex-1 overflow-y-auto">
-            <div className="w-full max-w-4xl mx-auto px-4">
+            <div className="w-full max-w-4xl mx-auto px-4 pt-8 md:pt-10">
               <ConvexMessages messages={messages} agentName={agentName} />
             </div>
           </div>
