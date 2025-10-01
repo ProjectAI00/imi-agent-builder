@@ -1,65 +1,17 @@
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
-import Database from "better-sqlite3";
-import { drizzle } from "drizzle-orm/better-sqlite3";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-http";
 import { user, session, account, verification } from "./auth-schema";
 
-// Use in-memory SQLite (works on Vercel serverless)
-const sqlite = new Database(":memory:");
-
-// Initialize schema in memory
-sqlite.exec(`
-  CREATE TABLE IF NOT EXISTS user (
-    id TEXT PRIMARY KEY,
-    email TEXT NOT NULL UNIQUE,
-    emailVerified INTEGER DEFAULT 0,
-    name TEXT,
-    image TEXT,
-    createdAt INTEGER NOT NULL,
-    updatedAt INTEGER NOT NULL
-  );
-  CREATE TABLE IF NOT EXISTS session (
-    id TEXT PRIMARY KEY,
-    userId TEXT NOT NULL,
-    expiresAt INTEGER NOT NULL,
-    token TEXT NOT NULL UNIQUE,
-    ipAddress TEXT,
-    userAgent TEXT,
-    createdAt INTEGER NOT NULL,
-    updatedAt INTEGER NOT NULL,
-    FOREIGN KEY (userId) REFERENCES user(id)
-  );
-  CREATE TABLE IF NOT EXISTS account (
-    id TEXT PRIMARY KEY,
-    userId TEXT NOT NULL,
-    accountId TEXT NOT NULL,
-    providerId TEXT NOT NULL,
-    accessToken TEXT,
-    refreshToken TEXT,
-    expiresAt INTEGER,
-    scope TEXT,
-    password TEXT,
-    createdAt INTEGER NOT NULL,
-    updatedAt INTEGER NOT NULL,
-    FOREIGN KEY (userId) REFERENCES user(id)
-  );
-  CREATE TABLE IF NOT EXISTS verification (
-    id TEXT PRIMARY KEY,
-    identifier TEXT NOT NULL,
-    value TEXT NOT NULL,
-    expiresAt INTEGER NOT NULL,
-    createdAt INTEGER NOT NULL,
-    updatedAt INTEGER NOT NULL
-  );
-`);
-
-const db = drizzle(sqlite);
+const sql = neon(process.env.DATABASE_URL!);
+const db = drizzle(sql);
 
 export const auth = betterAuth({
   plugins: [nextCookies()],
   database: drizzleAdapter(db, {
-    provider: "sqlite",
+    provider: "pg",
     schema: {
       user,
       session,
