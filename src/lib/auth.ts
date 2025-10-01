@@ -1,22 +1,74 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
-import Database from "better-sqlite3";
-import { drizzle } from "drizzle-orm/better-sqlite3";
-import path from "path";
-import fs from "fs";
 import { user, session, account, verification } from "./auth-schema";
 
-// Create .data directory if it doesn't exist
-const authDataDir = path.join(process.cwd(), ".data");
-if (!fs.existsSync(authDataDir)) {
-  fs.mkdirSync(authDataDir, { recursive: true });
-}
-const authDbPath = path.join(authDataDir, "auth.db");
+// Use in-memory database for Vercel serverless
+let db: any;
 
-// Create Drizzle database with SQLite
-const sqlite = new Database(authDbPath);
-const db = drizzle(sqlite);
+if (process.env.VERCEL) {
+  // On Vercel, use a minimal in-memory setup (sessions won't persist across requests)
+  // In production, you should use a proper database like Postgres/Neon
+  const Database = require("better-sqlite3");
+  const { drizzle } = require("drizzle-orm/better-sqlite3");
+  const sqlite = new Database(":memory:");
+  db = drizzle(sqlite);
+
+  // Create tables in memory
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS user (
+      id TEXT PRIMARY KEY,
+      email TEXT NOT NULL UNIQUE,
+      emailVerified INTEGER DEFAULT 0,
+      name TEXT,
+      createdAt INTEGER NOT NULL,
+      updatedAt INTEGER NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS session (
+      id TEXT PRIMARY KEY,
+      userId TEXT NOT NULL,
+      expiresAt INTEGER NOT NULL,
+      token TEXT NOT NULL UNIQUE,
+      createdAt INTEGER NOT NULL,
+      updatedAt INTEGER NOT NULL,
+      FOREIGN KEY (userId) REFERENCES user(id)
+    );
+    CREATE TABLE IF NOT EXISTS account (
+      id TEXT PRIMARY KEY,
+      userId TEXT NOT NULL,
+      providerId TEXT NOT NULL,
+      providerUserId TEXT NOT NULL,
+      accessToken TEXT,
+      refreshToken TEXT,
+      expiresAt INTEGER,
+      createdAt INTEGER NOT NULL,
+      updatedAt INTEGER NOT NULL,
+      FOREIGN KEY (userId) REFERENCES user(id)
+    );
+    CREATE TABLE IF NOT EXISTS verification (
+      id TEXT PRIMARY KEY,
+      identifier TEXT NOT NULL,
+      value TEXT NOT NULL,
+      expiresAt INTEGER NOT NULL,
+      createdAt INTEGER NOT NULL,
+      updatedAt INTEGER NOT NULL
+    );
+  `);
+} else {
+  // Local development: use file-based SQLite
+  const Database = require("better-sqlite3");
+  const { drizzle } = require("drizzle-orm/better-sqlite3");
+  const path = require("path");
+  const fs = require("fs");
+
+  const authDataDir = path.join(process.cwd(), ".data");
+  if (!fs.existsSync(authDataDir)) {
+    fs.mkdirSync(authDataDir, { recursive: true });
+  }
+  const authDbPath = path.join(authDataDir, "auth.db");
+  const sqlite = new Database(authDbPath);
+  db = drizzle(sqlite);
+}
 
 export const auth = betterAuth({
   plugins: [nextCookies()],
