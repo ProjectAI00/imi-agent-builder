@@ -1,0 +1,9 @@
+.data
+.vercel
+twitter-mcp-server/node_modules
+twitter-mcp-server/dist
+twitter-mcp-server/*.js
+twitter-mcp-server/*.json
+*.log
+.env*
+!.env.example
