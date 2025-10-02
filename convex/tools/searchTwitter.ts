@@ -26,13 +26,25 @@ const TwitterTweetSchema = z.object({
 });
 
 export const searchTwitter = createTool({
-  description: `Search Twitter for tweets. Use specific query formats for best results:
+  description: `Search Twitter for tweets and analyze the full results you get back. Use specific query formats:
   - "from:username" to get a user's own tweets
   - "@username" to find mentions of a user
   - "keyword" for general search
-  Returns tweets with full text, user info, and engagement metrics.
-  
-  IMPORTANT: Only use information directly found in tweets. Do not make assumptions about people, locations, or events. Use gender-neutral pronouns unless explicitly stated in profiles/tweets.`,
+
+  Returns an array of tweets with full text, user info, and engagement metrics.
+
+  CRITICAL USAGE INSTRUCTIONS:
+  - Look through ALL the tweets returned, not just the first one or two
+  - Find diverse content: look for tweets about their actual work, tech opinions, projects, patterns
+  - Don't fixate on joke tweets or memes - those are fine to mention once but find their real content too
+  - Each time you use this data, pull from DIFFERENT tweets to keep responses fresh
+  - If you see a funny/meme tweet with high engagement, acknowledge it but also look for their substantive tweets
+  - The full array is your dataset - explore it thoroughly
+
+  ACCURACY RULES:
+  - Only use information directly found in the tweets text
+  - Do not make assumptions about people, locations, or events
+  - If a tweet is obviously a joke (like raising money from a video game), treat it as a joke, not fact`,
 
   args: z.object({
     query: z.string().describe(`Twitter search query. Examples:
@@ -71,7 +83,7 @@ export const searchTwitter = createTool({
       // Build query parameters
       const params = new URLSearchParams({
         words: args.query,
-        count: Math.min(args.limit, 20).toString(),
+        count: args.limit.toString(), // Use the full limit requested
         topicId: "702",
         apiKey: apiKey,
         resFormat: "json",

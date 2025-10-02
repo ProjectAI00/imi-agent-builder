@@ -30,7 +30,7 @@ export const models = {
 // Model-specific temperatures (from your config)
 export const temperatures = {
   default: 0.3,  // glm-4.5
-  casual: 1.5,   // glm-4.5 - balanced creativity for roasting
+  casual: 0.7,   // glm-4.5 - balanced for roasting
   professional: 0.3, // glm-4.5
   fast: 0.7,     // gpt-5-nano
   coding: 0.3,   // qwen-coder
