@@ -1,5 +1,6 @@
 import { type Config } from "@convex-dev/agent";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { createOpenAI } from "@ai-sdk/openai";
 
 /**
  * Shared agent configuration using your existing models
@@ -8,6 +9,10 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 
 const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY!,
+});
+
+const openai = createOpenAI({
+  apiKey: process.env.OPENAI_API_KEY!,
 });
 
 // Your models - keeping the exact same setup
@@ -41,24 +46,21 @@ export const temperatures = {
  * Shared configuration for all agents
  */
 export const defaultConfig: Partial<Config> = {
-  // Usage tracking disabled for now (type compatibility issues)
-  // Can be enabled once we fix the context typing
+  textEmbeddingModel: openai.embedding("text-embedding-3-small"),
 
-  // Call settings
   callSettings: {
     maxRetries: 3,
   },
 
-  // Context options (balanced for performance and relevance)
   contextOptions: {
     recentMessages: 50,
     excludeToolMessages: true,
     searchOptions: {
       limit: 10,
-      textSearch: false,
-      vectorSearch: false,
+      textSearch: true,
+      vectorSearch: true,
       messageRange: { before: 2, after: 1 },
     },
-    searchOtherThreads: false, // Enable when we have embeddings
+    searchOtherThreads: true,
   },
 };

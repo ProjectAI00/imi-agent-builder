@@ -149,4 +149,34 @@ export default defineSchema({
     .index("by_toolName", ["toolName"])
     .index("by_userId", ["userId"])
     .index("by_threadId", ["threadId"]),
+
+  // User memory storage for structured recall
+  userMemories: defineTable({
+    userId: v.string(),
+    threadId: v.string(),
+    timestamp: v.number(),
+
+    // Extracted entities (flexible JSON structure)
+    entities: v.any(), // { people: [...], topics: [...], places: [...], etc }
+
+    // Key facts from the conversation
+    facts: v.array(v.string()),
+
+    // Priority level for importance
+    priority: v.string(), // "low", "medium", "high"
+
+    // Soft delete support
+    deleted: v.boolean(),
+    deletedAt: v.optional(v.number()),
+
+    // References to original messages for full context
+    messageIds: v.array(v.string()),
+
+    // Version history for undo
+    previousVersion: v.optional(v.any()),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_threadId", ["threadId"])
+    .index("by_userId_and_timestamp", ["userId", "timestamp"])
+    .index("by_userId_and_deleted", ["userId", "deleted"]),
 });

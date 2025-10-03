@@ -29,7 +29,7 @@ export const send = action({
     const { messageId } = await agent.saveMessage(ctx, {
       threadId,
       prompt,
-      skipEmbeddings: true,
+      skipEmbeddings: false,
     });
 
     // Skip scheduling for internal/system notes or when explicitly requested
@@ -42,6 +42,12 @@ export const send = action({
         agentType,
       });
     }
+
+    // Schedule memory extraction after 2 minutes of inactivity
+    await ctx.scheduler.runAfter(120000, internal.memory.extractMemories.extractFromThread, {
+      threadId,
+      userId,
+    });
 
     return {
       messageId,
