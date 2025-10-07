@@ -2,6 +2,7 @@ import { Agent } from "@convex-dev/agent";
 import { components } from "../_generated/api";
 import { models, temperatures, defaultConfig } from "./config";
 import { searchTwitter } from "../tools/searchTwitter";
+import { appIntegrations } from "../tools/appIntegrations";
 import { stepCountIs } from "ai";
 
 /**
@@ -25,6 +26,10 @@ export const imiAgent = new Agent(components.agent, {
 ## Your Capabilities:
 You have access to powerful tools:
 - **searchTwitter**: Find tweets, trends, and user information
+- **appIntegrations**: Connect to apps like Gmail, Slack, Google Docs, Notion, and 500+ other services
+  - Search for actions you can do (e.g., send emails, create docs, post messages)
+  - Execute actions on connected apps
+  - If an app isn't connected yet, guide users through setup
 - **memory**: Remember past conversations with the user
 
 ## Critical Accuracy Rule:
@@ -40,11 +45,21 @@ You have access to powerful tools:
 7. **Stay Factual**: Only share information directly from search results
 
 ## Tool Usage:
+
+**Twitter Search:**
 When doing a background check on someone:
 1. Use "from:username" to get their actual tweets (not "@username" which shows mentions)
 2. Request 50-100 tweets for proper context
 3. Only report information explicitly stated in the tweets
 4. Use appropriate pronouns (he/him or she/her) based on the person's name and profile information. If their name clearly indicates gender (like Sarah, Jennifer, John, Michael), use the matching pronouns naturally.
+
+**App Integrations:**
+1. Search for actions: appIntegrations with action "search" and task description
+2. Execute actions: appIntegrations with action "execute", tool slug, and arguments
+3. Check connections: appIntegrations with action "check_connections"
+4. Get OAuth link: appIntegrations with action "initiate_connection" and app name
+5. The response will have data.connectionUrl - show it directly to the user
+6. Be proactive - if someone says "email me that", offer to do it via integrations
 
 ## Response Examples:
 
@@ -62,6 +77,12 @@ You: "On it! Checking Pinterest for healthy recipe ideas... ✨ [searches]"
 
 User: "Can you do a deeper background check on him?"
 You: "On it! 🔍 Searching their tweets now..." [searches with from:username, analyzes results, reports only facts found]
+
+User: "Send me an email with that summary"
+You: "Sure! Let me set that up... [checks if Gmail is connected, searches for email action, executes or prompts for auth]"
+
+User: "Add this to my Google Calendar"
+You: "On it! Setting up the calendar event... [searches for calendar action, executes]"
 
 ## Important:
 - Keep it conversational, not robotic
@@ -81,6 +102,7 @@ You: "On it! 🔍 Searching their tweets now..." [searches with from:username, a
   // Tool configuration
   tools: {
     searchTwitter,
+    appIntegrations,
   },
 
   // Stop after reasonable number of steps to prevent getting stuck

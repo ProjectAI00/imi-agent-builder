@@ -17,20 +17,35 @@ import type * as chat_initRoast from "../chat/initRoast.js";
 import type * as chat_messages from "../chat/messages.js";
 import type * as chat_sendMessage from "../chat/sendMessage.js";
 import type * as chat_threads from "../chat/threads.js";
+import type * as crons from "../crons.js";
 import type * as debug_backfillMemories from "../debug/backfillMemories.js";
+import type * as debug_checkAuthUsers from "../debug/checkAuthUsers.js";
 import type * as debug_checkMemories from "../debug/checkMemories.js";
+import type * as debug_checkToolRouterSessions from "../debug/checkToolRouterSessions.js";
 import type * as debug_checkUserMemories from "../debug/checkUserMemories.js";
+import type * as debug_cleanupStaleConnections from "../debug/cleanupStaleConnections.js";
 import type * as debug_getFullMemory from "../debug/getFullMemory.js";
 import type * as debug_getRecentMemories from "../debug/getRecentMemories.js";
+import type * as lib_getToolRouterClient from "../lib/getToolRouterClient.js";
+import type * as lib_taskAnalyzer from "../lib/taskAnalyzer.js";
+import type * as lib_toolRouterClient from "../lib/toolRouterClient.js";
 import type * as memory_extractMemories from "../memory/extractMemories.js";
 import type * as migrations_backfillEmbeddings from "../migrations/backfillEmbeddings.js";
 import type * as stats from "../stats.js";
+import type * as test_testAppIntegrations from "../test/testAppIntegrations.js";
+import type * as test_testToolRouter from "../test/testToolRouter.js";
+import type * as toolRouter_sessions from "../toolRouter/sessions.js";
+import type * as toolRouter_tasks from "../toolRouter/tasks.js";
+import type * as tools_appIntegrations from "../tools/appIntegrations.js";
 import type * as tools_searchMemory from "../tools/searchMemory.js";
 import type * as tools_searchMemoryHelpers from "../tools/searchMemoryHelpers.js";
 import type * as tools_searchTwitter from "../tools/searchTwitter.js";
 import type * as tools_toolLogger from "../tools/toolLogger.js";
 import type * as usage from "../usage.js";
 import type * as users_getOrCreate from "../users/getOrCreate.js";
+import type * as workers_twitterMonitor from "../workers/twitterMonitor.js";
+import type * as workflows_agentOrchestration from "../workflows/agentOrchestration.js";
+import type * as workflows_steps from "../workflows/steps.js";
 
 import type {
   ApiFromModules,
@@ -56,20 +71,35 @@ declare const fullApi: ApiFromModules<{
   "chat/messages": typeof chat_messages;
   "chat/sendMessage": typeof chat_sendMessage;
   "chat/threads": typeof chat_threads;
+  crons: typeof crons;
   "debug/backfillMemories": typeof debug_backfillMemories;
+  "debug/checkAuthUsers": typeof debug_checkAuthUsers;
   "debug/checkMemories": typeof debug_checkMemories;
+  "debug/checkToolRouterSessions": typeof debug_checkToolRouterSessions;
   "debug/checkUserMemories": typeof debug_checkUserMemories;
+  "debug/cleanupStaleConnections": typeof debug_cleanupStaleConnections;
   "debug/getFullMemory": typeof debug_getFullMemory;
   "debug/getRecentMemories": typeof debug_getRecentMemories;
+  "lib/getToolRouterClient": typeof lib_getToolRouterClient;
+  "lib/taskAnalyzer": typeof lib_taskAnalyzer;
+  "lib/toolRouterClient": typeof lib_toolRouterClient;
   "memory/extractMemories": typeof memory_extractMemories;
   "migrations/backfillEmbeddings": typeof migrations_backfillEmbeddings;
   stats: typeof stats;
+  "test/testAppIntegrations": typeof test_testAppIntegrations;
+  "test/testToolRouter": typeof test_testToolRouter;
+  "toolRouter/sessions": typeof toolRouter_sessions;
+  "toolRouter/tasks": typeof toolRouter_tasks;
+  "tools/appIntegrations": typeof tools_appIntegrations;
   "tools/searchMemory": typeof tools_searchMemory;
   "tools/searchMemoryHelpers": typeof tools_searchMemoryHelpers;
   "tools/searchTwitter": typeof tools_searchTwitter;
   "tools/toolLogger": typeof tools_toolLogger;
   usage: typeof usage;
   "users/getOrCreate": typeof users_getOrCreate;
+  "workers/twitterMonitor": typeof workers_twitterMonitor;
+  "workflows/agentOrchestration": typeof workflows_agentOrchestration;
+  "workflows/steps": typeof workflows_steps;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
 
@@ -2915,6 +2945,200 @@ export declare const components: {
           null
         >;
       };
+    };
+  };
+  workflow: {
+    journal: {
+      load: FunctionReference<
+        "query",
+        "internal",
+        { workflowId: string },
+        {
+          journalEntries: Array<{
+            _creationTime: number;
+            _id: string;
+            step: {
+              args: any;
+              argsSize: number;
+              completedAt?: number;
+              functionType: "query" | "mutation" | "action";
+              handle: string;
+              inProgress: boolean;
+              name: string;
+              runResult?:
+                | { kind: "success"; returnValue: any }
+                | { error: string; kind: "failed" }
+                | { kind: "canceled" };
+              startedAt: number;
+              workId?: string;
+            };
+            stepNumber: number;
+            workflowId: string;
+          }>;
+          logLevel: "DEBUG" | "TRACE" | "INFO" | "REPORT" | "WARN" | "ERROR";
+          ok: boolean;
+          workflow: {
+            _creationTime: number;
+            _id: string;
+            args: any;
+            generationNumber: number;
+            logLevel?: any;
+            name?: string;
+            onComplete?: { context?: any; fnHandle: string };
+            runResult?:
+              | { kind: "success"; returnValue: any }
+              | { error: string; kind: "failed" }
+              | { kind: "canceled" };
+            startedAt?: any;
+            state?: any;
+            workflowHandle: string;
+          };
+        }
+      >;
+      startStep: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          generationNumber: number;
+          name: string;
+          retry?:
+            | boolean
+            | { base: number; initialBackoffMs: number; maxAttempts: number };
+          schedulerOptions?: { runAt?: number } | { runAfter?: number };
+          step: {
+            args: any;
+            argsSize: number;
+            completedAt?: number;
+            functionType: "query" | "mutation" | "action";
+            handle: string;
+            inProgress: boolean;
+            name: string;
+            runResult?:
+              | { kind: "success"; returnValue: any }
+              | { error: string; kind: "failed" }
+              | { kind: "canceled" };
+            startedAt: number;
+            workId?: string;
+          };
+          workflowId: string;
+          workpoolOptions?: {
+            defaultRetryBehavior?: {
+              base: number;
+              initialBackoffMs: number;
+              maxAttempts: number;
+            };
+            logLevel?: "DEBUG" | "TRACE" | "INFO" | "REPORT" | "WARN" | "ERROR";
+            maxParallelism?: number;
+            retryActionsByDefault?: boolean;
+          };
+        },
+        {
+          _creationTime: number;
+          _id: string;
+          step: {
+            args: any;
+            argsSize: number;
+            completedAt?: number;
+            functionType: "query" | "mutation" | "action";
+            handle: string;
+            inProgress: boolean;
+            name: string;
+            runResult?:
+              | { kind: "success"; returnValue: any }
+              | { error: string; kind: "failed" }
+              | { kind: "canceled" };
+            startedAt: number;
+            workId?: string;
+          };
+          stepNumber: number;
+          workflowId: string;
+        }
+      >;
+    };
+    workflow: {
+      cancel: FunctionReference<
+        "mutation",
+        "internal",
+        { workflowId: string },
+        null
+      >;
+      cleanup: FunctionReference<
+        "mutation",
+        "internal",
+        { workflowId: string },
+        boolean
+      >;
+      complete: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          generationNumber: number;
+          runResult:
+            | { kind: "success"; returnValue: any }
+            | { error: string; kind: "failed" }
+            | { kind: "canceled" };
+          workflowId: string;
+        },
+        null
+      >;
+      create: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          maxParallelism?: number;
+          onComplete?: { context?: any; fnHandle: string };
+          startAsync?: boolean;
+          workflowArgs: any;
+          workflowHandle: string;
+          workflowName: string;
+        },
+        string
+      >;
+      getStatus: FunctionReference<
+        "query",
+        "internal",
+        { workflowId: string },
+        {
+          inProgress: Array<{
+            _creationTime: number;
+            _id: string;
+            step: {
+              args: any;
+              argsSize: number;
+              completedAt?: number;
+              functionType: "query" | "mutation" | "action";
+              handle: string;
+              inProgress: boolean;
+              name: string;
+              runResult?:
+                | { kind: "success"; returnValue: any }
+                | { error: string; kind: "failed" }
+                | { kind: "canceled" };
+              startedAt: number;
+              workId?: string;
+            };
+            stepNumber: number;
+            workflowId: string;
+          }>;
+          logLevel: "DEBUG" | "TRACE" | "INFO" | "REPORT" | "WARN" | "ERROR";
+          workflow: {
+            _creationTime: number;
+            _id: string;
+            args: any;
+            generationNumber: number;
+            logLevel?: any;
+            name?: string;
+            onComplete?: { context?: any; fnHandle: string };
+            runResult?:
+              | { kind: "success"; returnValue: any }
+              | { error: string; kind: "failed" }
+              | { kind: "canceled" };
+            startedAt?: any;
+            state?: any;
+            workflowHandle: string;
+          };
+        }
+      >;
     };
   };
 };

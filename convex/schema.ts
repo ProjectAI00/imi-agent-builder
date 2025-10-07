@@ -48,7 +48,7 @@ export default defineSchema({
 
   // Better Auth: Session table
   authSessions: defineTable({
-    userId: v.id("authUsers"),
+    userId: v.union(v.id("authUsers"), v.string()),
     expiresAt: v.number(),
     token: v.string(),
     ipAddress: v.optional(v.string()),
@@ -61,7 +61,7 @@ export default defineSchema({
 
   // Better Auth: Account table (for OAuth)
   authAccounts: defineTable({
-    userId: v.id("authUsers"),
+    userId: v.union(v.id("authUsers"), v.string()),
     accountId: v.string(),
     providerId: v.string(),
     accessToken: v.optional(v.string()),
@@ -179,4 +179,47 @@ export default defineSchema({
     .index("by_threadId", ["threadId"])
     .index("by_userId_and_timestamp", ["userId", "timestamp"])
     .index("by_userId_and_deleted", ["userId", "deleted"]),
+
+  // Tool Router sessions (Composio MCP integration)
+  toolRouterSessions: defineTable({
+    userId: v.string(),
+    sessionId: v.string(),
+    sessionUrl: v.string(),
+    connectedToolkits: v.array(v.string()),
+    createdAt: v.number(),
+    lastActiveAt: v.number(),
+    expiresAt: v.optional(v.number()),
+    
+    // Background worker configuration
+    backgroundWorkers: v.optional(v.array(v.object({
+      id: v.string(),
+      type: v.string(),
+      enabled: v.boolean(),
+      schedule: v.string(),
+      config: v.any(),
+      lastRun: v.optional(v.number()),
+      nextRun: v.optional(v.number()),
+    }))),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_sessionId", ["sessionId"]),
+
+  // Background task execution results
+  backgroundTasks: defineTable({
+    userId: v.string(),
+    sessionId: v.string(),
+    workerId: v.string(),
+    taskType: v.string(),
+    status: v.string(),
+    startedAt: v.number(),
+    completedAt: v.optional(v.number()),
+    toolsCalled: v.array(v.string()),
+    results: v.any(),
+    error: v.optional(v.string()),
+    userNotified: v.boolean(),
+    notificationMessage: v.optional(v.string()),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_status", ["status"])
+    .index("by_userId_and_status", ["userId", "status"]),
 });

@@ -33,7 +33,7 @@ export const convexAdapter = () => {
               const sessionId = await convex.mutation(api.auth.betterAuth.createSession, {
                 userId: data.userId,
                 token: data.token,
-                expiresAt: data.expiresAt,
+                expiresAt: data.expiresAt instanceof Date ? data.expiresAt.getTime() : data.expiresAt,
                 ipAddress: data.ipAddress,
                 userAgent: data.userAgent,
               });
@@ -47,7 +47,7 @@ export const convexAdapter = () => {
                 providerId: data.providerId,
                 accessToken: data.accessToken,
                 refreshToken: data.refreshToken,
-                expiresAt: data.expiresAt,
+                expiresAt: data.expiresAt instanceof Date ? data.expiresAt.getTime() : data.expiresAt,
                 scope: data.scope,
                 password: data.password,
               });

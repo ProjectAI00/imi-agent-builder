@@ -17,11 +17,21 @@ const openai = createOpenAI({
 
 // Your models - keeping the exact same setup
 export const models = {
-  // Default: GLM-4.5
-  default: openrouter("z-ai/glm-4.5"),
+  // Default: GLM-4.5 with reasoning disabled
+  default: openrouter("z-ai/glm-4.5", {
+    // Disable reasoning tokens for faster responses
+    reasoning: {
+      exclude: true,
+    },
+  } as any),
 
-  // For casual conversations (more creative)
-  casual: openrouter("z-ai/glm-4.5"),
+  // For casual conversations (using GLM-4.5, reasoning disabled)
+  casual: openrouter("z-ai/glm-4.5", {
+    // Disable reasoning tokens for faster responses
+    reasoning: {
+      exclude: true,
+    },
+  } as any),
 
   // For professional/precise responses
   professional: openrouter("z-ai/glm-4.5"),
@@ -29,17 +39,19 @@ export const models = {
   // Fallback options
   fast: openrouter("openai/gpt-5-nano"),
   coding: openrouter("qwen/qwen3-coder"),
-  grok: openrouter("x-ai/grok-code-fast-1"),
+  glm: openrouter("z-ai/glm-4.5"), // Keep GLM available
+  grok: openrouter("x-ai/grok-4-fast"),
 };
 
 // Model-specific temperatures (from your config)
 export const temperatures = {
-  default: 0.3,  // glm-4.5
-  casual: 0.7,   // glm-4.5 - balanced for roasting
+  default: 0.3,  // glm-4.5 (reasoning disabled)
+  casual: 0.7,   // glm-4.5 (reasoning disabled) - back to original for roasting
   professional: 0.3, // glm-4.5
   fast: 0.7,     // gpt-5-nano
   coding: 0.3,   // qwen-coder
-  grok: 0.3,     // grok-code-fast
+  glm: 0.3,      // glm-4.5
+  grok: 0.3,     // grok-4-fast
 };
 
 /**

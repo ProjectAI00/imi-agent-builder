@@ -51,6 +51,23 @@ export const getOrCreate = mutation({
 });
 
 /**
+ * Get user by userId (query - can be called from workflows)
+ */
+export const getByUserId = query({
+  args: {
+    userId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .first();
+
+    return user;
+  },
+});
+
+/**
  * Get user by phone number (for iMessage)
  */
 export const getByPhoneNumber = query({

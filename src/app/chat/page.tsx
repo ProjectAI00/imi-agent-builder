@@ -2,6 +2,7 @@
 
 import { UsernameAuthWrapper } from "@/components/auth/username-auth-wrapper";
 import { ConvexChatLayout } from "@/components/convex-chat/convex-chat-layout";
+import { OAuthPopupHandler } from "@/components/oauth/oauth-popup-handler";
 import { useConvexChat, useConvexThreads } from "@/hooks/use-convex-chat";
 import { authClient } from "@/lib/auth-client";
 import { useState, useEffect, useRef } from "react";
@@ -48,6 +49,9 @@ export default function ChatPage() {
   return (
     <UsernameAuthWrapper>
       <div className="h-full w-full flex overflow-hidden relative min-h-0 min-w-0">
+        {/* OAuth Popup Handler - automatically opens auth popups */}
+        <OAuthPopupHandler messages={messages} />
+
         <ConvexChatLayout
           messages={messages}
           threads={threads}

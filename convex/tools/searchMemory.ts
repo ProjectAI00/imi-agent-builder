@@ -38,9 +38,10 @@ Returns relevant facts and the thread ID to load full context.`,
     console.log(`[Memory Search] Query: "${query}" for user ${userId}`);
 
     try {
-      // Get all user memories (not deleted)
-      const memories = await ctx.runQuery(internal.tools.searchMemoryHelpers.getUserMemories, {
+      // Get limited recent memories to prevent context overflow
+      const memories = await ctx.runQuery(internal.tools.searchMemoryHelpers.searchMemoriesLimited, {
         userId,
+        limit: 10, // Only fetch top 10 most recent memories
       });
 
       if (memories.length === 0) {
@@ -51,18 +52,29 @@ Returns relevant facts and the thread ID to load full context.`,
         };
       }
 
-      // Use fast model to find matching memories
-      const { object: searchResult } = await generateObject({
-        model: openrouter("openai/gpt-oss-20b"),
-        schema: z.object({
-          matchingMemoryIds: z.array(z.string()),
-          relevantFacts: z.array(z.string()),
-          confidence: z.enum(["high", "medium", "low"]),
-        }),
-        prompt: `The user is searching for: "${query}"
+      // Compress memories to only essential data
+      const compressedMemories = memories.map((m: any) => ({
+        _id: m._id,
+        facts: m.facts,
+        entities: m.entities,
+        timestamp: m.timestamp,
+        threadId: m.threadId,
+      }));
 
-Here are their stored memories:
-${JSON.stringify(memories, null, 2)}
+      // Use fast model to find matching memories
+      let searchResult;
+      try {
+        const result = await generateObject({
+          model: openrouter("openai/gpt-oss-20b"),
+          schema: z.object({
+            matchingMemoryIds: z.array(z.string()),
+            relevantFacts: z.array(z.string()),
+            confidence: z.enum(["high", "medium", "low"]),
+          }),
+          prompt: `The user is searching for: "${query}"
+
+Here are their stored memories (most recent):
+${JSON.stringify(compressedMemories, null, 2)}
 
 Find which memories match the query. Return:
 1. matchingMemoryIds: IDs of memories that match
@@ -70,7 +82,20 @@ Find which memories match the query. Return:
 3. confidence: how confident you are in the match
 
 If no good match, return empty arrays and low confidence.`,
-      });
+        });
+        searchResult = result.object;
+      } catch (modelError) {
+        console.error("[Memory Search] Model error, using fallback:", modelError);
+        // Fallback: return all memories without filtering
+        return {
+          success: true,
+          found: true,
+          confidence: "medium",
+          facts: compressedMemories.flatMap((m: any) => m.facts || []),
+          memories: compressedMemories,
+          message: `Found ${memories.length} recent memories. (Note: AI filtering unavailable)`,
+        };
+      }
 
       if (searchResult.matchingMemoryIds.length === 0) {
         return {

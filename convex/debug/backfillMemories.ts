@@ -16,10 +16,9 @@ export const getAllThreadsNeedingMemories = internalQuery({
  * Run this once to extract memories from past conversations
  */
 export const backfillAllMemories = internalAction({
-  handler: async (ctx) => {
+  handler: async (ctx): Promise<{ total: number; success: number; errors: number }> => {
     console.log("[Backfill] Starting memory extraction for all threads...");
 
-    // Get all threads
     const threads = await ctx.runQuery(internal.debug.backfillMemories.getAllThreadsNeedingMemories);
 
     console.log(`[Backfill] Found ${threads.length} threads to process`);
@@ -27,7 +26,6 @@ export const backfillAllMemories = internalAction({
     let successCount = 0;
     let errorCount = 0;
 
-    // Extract memories from each thread
     for (const thread of threads) {
       try {
         console.log(`[Backfill] Processing thread ${thread.threadId} for user ${thread.userId}`);

@@ -5,6 +5,7 @@ import { Agent } from "@convex-dev/agent";
 import { components } from "../_generated/api";
 import { models, temperatures, defaultConfig } from "./config";
 import { searchTwitter } from "../tools/searchTwitter";
+import { appIntegrations } from "../tools/appIntegrations";
 import { stepCountIs } from "ai";
 import { roastAgent } from "./roastAgent";
 
@@ -31,6 +32,7 @@ export const imiAgent = new Agent(components.agent, {
 ## Your Capabilities:
 You have access to powerful tools:
 - **searchTwitter**: Find tweets, trends, and user information
+- **appIntegrations**: Connect to apps like Gmail, Slack, Google Docs, Notion, and 500+ other services. If someone asks you to send an email or create a doc, you can do it. You can also get OAuth links to help users connect new apps.
 
 ## Guidelines:
 1. **Be Proactive**: If you can help with a tool, offer it
@@ -60,6 +62,7 @@ You have access to powerful tools:
   // Tools enabled
   tools: {
     searchTwitter,
+    appIntegrations,
   },
 
   // Allow multiple tool calls in sequence

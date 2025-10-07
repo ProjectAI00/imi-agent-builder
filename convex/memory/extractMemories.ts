@@ -1,4 +1,4 @@
-import { internalAction, internalMutation } from "../_generated/server";
+import { internalAction, internalMutation, internalQuery } from "../_generated/server";
 import { internal, components } from "../_generated/api";
 import { v } from "convex/values";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
@@ -20,6 +20,17 @@ export const extractFromThread = internalAction({
   },
   handler: async (ctx, { threadId, userId }) => {
     console.log(`[Memory Extraction] Starting for thread ${threadId}`);
+
+    // Check if we already extracted memories from this thread recently (within last 5 minutes)
+    const recentMemory = await ctx.runQuery(internal.memory.extractMemories.getRecentMemoryForThread, {
+      threadId,
+      withinMinutes: 5,
+    });
+
+    if (recentMemory) {
+      console.log(`[Memory Extraction] Skipping - already extracted ${Math.round((Date.now() - recentMemory.timestamp) / 1000)}s ago`);
+      return;
+    }
 
     // Get all messages from thread
     const messagesResult = await ctx.runQuery(components.agent.messages.listMessagesByThreadId, {
@@ -58,7 +69,7 @@ export const extractFromThread = internalAction({
         priority: z.enum(["low", "medium", "high"]),
         shouldStore: z.boolean(),
       }),
-      prompt: `Analyze this conversation and extract important information to remember.
+      prompt: `Analyze this conversation and extract ONLY important long-term information worth remembering.
 
 Conversation:
 ${conversationText}
@@ -67,18 +78,25 @@ Extract:
 1. Entities: people, topics, places, projects mentioned
 2. Facts: key statements, decisions, or information worth remembering
 3. Priority: how important is this information? (low/medium/high)
-4. shouldStore: should we save this? (false if just casual chat with no substance)
+4. shouldStore: should we save this? (false if no meaningful long-term information)
 
-Focus on:
-- People mentioned with context about who they are
-- Important decisions or plans
-- Information the user explicitly wants remembered
-- Topics discussed in depth
+IMPORTANT - ONLY store memories that contain:
+- New information ABOUT the user (their preferences, goals, projects, background)
+- Important decisions or plans the user made
+- Facts or insights the user shared about themselves or their work
+- People, projects, or topics the user wants to track
+- Outcomes or learnings from completed tasks
 
-Skip:
-- Casual greetings ("hey", "lol", "ok")
-- Generic small talk
-- Tool calls or errors`,
+DO NOT store:
+- User requests or commands (e.g., "user asked for X", "user wants Y")
+- Task instructions without meaningful context
+- Generic conversation flow
+- Tool execution requests
+- Casual chat or acknowledgments
+- Temporary/transient information
+
+Example of GOOD memory: "User is building an AI coworker called Imi with 500+ app integrations, focusing on VC/Founder operations vertical"
+Example of BAD memory: "User requested a summary of their Google Docs", "User asked for help with X"`,
     });
 
     // Only store if AI thinks it's worth it
@@ -101,6 +119,27 @@ Skip:
     });
 
     console.log(`[Memory Extraction] Stored ${extraction.facts.length} facts from thread ${threadId}`);
+  },
+});
+
+/**
+ * Check if we have recent memories from this thread
+ */
+export const getRecentMemoryForThread = internalQuery({
+  args: {
+    threadId: v.string(),
+    withinMinutes: v.number(),
+  },
+  handler: async (ctx, { threadId, withinMinutes }) => {
+    const cutoffTime = Date.now() - (withinMinutes * 60 * 1000);
+
+    const recent = await ctx.db
+      .query("userMemories")
+      .withIndex("by_threadId", (q) => q.eq("threadId", threadId))
+      .filter((q) => q.gte(q.field("timestamp"), cutoffTime))
+      .first();
+
+    return recent;
   },
 });
 

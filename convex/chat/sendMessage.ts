@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { action, internalAction, internalMutation } from "../_generated/server";
-import { internal } from "../_generated/api";
+import { internal, components } from "../_generated/api";
 import { getAgent } from "../agents/index";
 
 /**
@@ -58,7 +58,7 @@ export const send = action({
 
 /**
  * Internal action to generate the AI response
- * This runs asynchronously after send() returns
+ * Routes to either direct agent (simple) or workflow (complex)
  */
 export const generateResponse = internalAction({
   args: {
@@ -71,32 +71,65 @@ export const generateResponse = internalAction({
     const { threadId, promptMessageId, userId, agentType = "casual" } = args;
 
     try {
-      // Get agent based on type
-      const agent = getAgent(agentType);
+      // Get the user's message text
+      const messagesResult = await ctx.runQuery(components.agent.messages.listMessagesByThreadId, {
+        threadId,
+        order: "desc" as const,
+      });
 
-      // Generate response with streaming
-      const result = await agent.streamText(
-        ctx,
-        { threadId, userId },
-        { promptMessageId },
-        {
-          // Save stream deltas for real-time UI updates
-          saveStreamDeltas: {
-            chunking: "word",
-            throttleMs: 100,
-          },
-        }
-      );
+      const userMessage = messagesResult.page.find((m: any) => m._id === promptMessageId);
 
-      // Consume the stream (required to complete)
-      await result.consumeStream();
+      if (!userMessage || !userMessage.text) {
+        throw new Error("User message not found");
+      }
 
-      console.log(`[Generate Response] Completed for thread ${threadId}`);
+      // ✅ SMART ROUTING: Analyze if this is simple or complex
+      const { analyzeTaskComplexity } = await import("../lib/taskAnalyzer");
+      const analysis = await analyzeTaskComplexity(userMessage.text);
+
+      if (analysis.isComplex) {
+        // Complex multi-step → Use Workflow for orchestration
+        console.log(`[Router → Workflow] Complex task: ${analysis.reasoning}`);
+
+        const { WorkflowManager } = await import("@convex-dev/workflow");
+        const workflow = new WorkflowManager(components.workflow);
+
+        const workflowId = await workflow.start(
+          ctx,
+          internal.workflows.agentOrchestration.executeUserRequest,
+          {
+            threadId,
+            userId,
+            userMessage: userMessage.text,
+            promptMessageId,
+          }
+        );
+
+        console.log(`[Router → Workflow] Started: ${workflowId}`);
+      } else {
+        // Simple single-step → Use Agent directly (fast!)
+        console.log(`[Router → Agent] Simple task: ${analysis.reasoning}`);
+
+        const agent = getAgent(agentType);
+        const result = await agent.streamText(
+          ctx,
+          { threadId, userId },
+          { promptMessageId },
+          {
+            saveStreamDeltas: {
+              chunking: "word",
+              throttleMs: 100,
+            }
+          }
+        );
+
+        await result.consumeStream();
+        console.log(`[Router → Agent] Completed`);
+      }
 
     } catch (error) {
-      console.error("[Generate Response] Error:", error);
+      console.error("[Router] Error:", error);
 
-      // Log error to database
       await ctx.runMutation(internal.chat.sendMessage.logError, {
         threadId,
         promptMessageId,
@@ -117,7 +150,7 @@ export const logError = internalMutation({
     promptMessageId: v.string(),
     error: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (_ctx, args) => {
     // You could save this to a dedicated errors table
     console.error(`[Error Log] Thread: ${args.threadId}, Message: ${args.promptMessageId}, Error: ${args.error}`);
   },

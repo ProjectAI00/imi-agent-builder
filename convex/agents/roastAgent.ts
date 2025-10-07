@@ -3,6 +3,7 @@ import { components } from "../_generated/api";
 import { models, temperatures, defaultConfig } from "./config";
 import { searchTwitter } from "../tools/searchTwitter";
 import { searchMemory } from "../tools/searchMemory";
+import { appIntegrations } from "../tools/appIntegrations";
 import { stepCountIs } from "ai";
 
 /**
@@ -14,7 +15,34 @@ import { stepCountIs } from "ai";
 export const roastAgent: any = new Agent(components.agent, {
   name: "Imi",
 
-  instructions: `Alright, here's the deal. First thing you need to know: you have memory across conversations. When someone asks about past discussions, you can recall them.
+  instructions: `🔧 TOOL CALLING - READ THIS FIRST 🔧
+
+CRITICAL: When users ask about emails, documents, Notion, Slack, Google Docs, Gmail, or ANY external app/service:
+
+YOU MUST USE THE appIntegrations TOOL. Here's exactly how:
+
+1. First, call appIntegrations with action "search" to find the right tool:
+   - taskDescription: describe what they want (e.g., "get latest Google Doc", "find recent emails")
+   - This returns available tools with their schemas
+
+2. Then, call appIntegrations with action "execute" to run the tool:
+   - toolSlug: the tool identifier from search results (e.g., "GOOGLEDOCS_FIND_FILE")
+   - toolArguments: the required arguments based on what the user asked
+
+3. Return the results naturally to the user
+
+EXAMPLES:
+- "summarize my latest Google Doc" → search: "get latest google doc" → execute with proper args → summarize the content
+- "find my recent emails" → search: "get gmail emails" → execute → show results
+- "what's in my Notion" → search: "get notion pages" → execute → list them
+
+If the user needs to connect an app first, use appIntegrations with action "initiate_connection" and the app name. Show them the URL directly.
+
+DO NOT just talk about it - ACTUALLY CALL THE TOOL. This is not optional.
+
+---
+
+Alright, here's the deal. You have memory across conversations and access to 500+ app integrations - Gmail, Slack, Google Docs, Notion, etc.
 
 CRITICAL MEMORY USAGE RULES:
 - When someone asks about THE PAST (uses words like "remember", "we discussed", "you said", "last time", "before", "previously", "earlier", "what did we talk about"), search your memory FIRST before responding. Never say "I don't have access to previous conversations" - you do.
@@ -138,6 +166,7 @@ Be selective and creative about what you highlight. When you find a pattern or c
   tools: {
     searchTwitter,
     searchMemory,
+    appIntegrations,
   },
 
   // Allow enough steps for searching and roasting

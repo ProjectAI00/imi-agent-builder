@@ -35,25 +35,30 @@ export const findUserByEmail = query({
 // Update user
 export const updateUser = mutation({
   args: {
-    userId: v.id("authUsers"),
+    userId: v.union(v.id("authUsers"), v.string()),
     email: v.optional(v.string()),
     emailVerified: v.optional(v.boolean()),
     name: v.optional(v.string()),
     image: v.optional(v.string()),
   },
   handler: async (ctx, { userId, ...updates }) => {
-    await ctx.db.patch(userId, {
+    // Convert string ID to proper Convex ID if needed
+    const id = typeof userId === 'string' && userId.startsWith('k')
+      ? userId as any
+      : userId;
+      
+    await ctx.db.patch(id, {
       ...updates,
       updatedAt: Date.now(),
     });
-    return userId;
+    return id;
   },
 });
 
 // Create session
 export const createSession = mutation({
   args: {
-    userId: v.id("authUsers"),
+    userId: v.union(v.id("authUsers"), v.string()),
     token: v.string(),
     expiresAt: v.number(),
     ipAddress: v.optional(v.string()),
@@ -61,8 +66,15 @@ export const createSession = mutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
+    
+    // Convert string ID to proper Convex ID if needed
+    const userId = typeof args.userId === 'string' && args.userId.startsWith('k')
+      ? args.userId as any
+      : args.userId;
+    
     const sessionId = await ctx.db.insert("authSessions", {
       ...args,
+      userId,
       createdAt: now,
       updatedAt: now,
     });
@@ -81,8 +93,11 @@ export const findSessionByToken = query({
 
     if (!session) return null;
 
-    // Get user data
-    const user = await ctx.db.get(session.userId);
+    // Get user data - handle both string and ID types
+    const userId = typeof session.userId === 'string' && session.userId.startsWith('k')
+      ? session.userId as any
+      : session.userId;
+    const user = await ctx.db.get(userId);
     if (!user) return null;
 
     return {
@@ -94,9 +109,14 @@ export const findSessionByToken = query({
 
 // Delete session
 export const deleteSession = mutation({
-  args: { sessionId: v.id("authSessions") },
+  args: { sessionId: v.union(v.id("authSessions"), v.string()) },
   handler: async (ctx, { sessionId }) => {
-    await ctx.db.delete(sessionId);
+    // Convert string ID to proper Convex ID if needed
+    const id = typeof sessionId === 'string' && sessionId.startsWith('j')
+      ? sessionId as any
+      : sessionId;
+      
+    await ctx.db.delete(id);
     return true;
   },
 });
@@ -104,7 +124,7 @@ export const deleteSession = mutation({
 // Create account
 export const createAccount = mutation({
   args: {
-    userId: v.id("authUsers"),
+    userId: v.union(v.id("authUsers"), v.string()),
     accountId: v.string(),
     providerId: v.string(),
     accessToken: v.optional(v.string()),
@@ -115,8 +135,15 @@ export const createAccount = mutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
+    
+    // Convert string ID to proper Convex ID if needed
+    const userId = typeof args.userId === 'string' && args.userId.startsWith('k')
+      ? args.userId as any
+      : args.userId;
+    
     const accountId = await ctx.db.insert("authAccounts", {
       ...args,
+      userId,
       createdAt: now,
       updatedAt: now,
     });
@@ -127,13 +154,18 @@ export const createAccount = mutation({
 // Find account by userId and providerId
 export const findAccount = query({
   args: {
-    userId: v.id("authUsers"),
+    userId: v.union(v.id("authUsers"), v.string()),
     providerId: v.string(),
   },
   handler: async (ctx, { userId, providerId }) => {
+    // Convert string ID to proper Convex ID if needed
+    const id = typeof userId === 'string' && userId.startsWith('k')
+      ? userId as any
+      : userId;
+      
     const accounts = await ctx.db
       .query("authAccounts")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .withIndex("by_userId", (q) => q.eq("userId", id))
       .collect();
 
     return accounts.find(a => a.providerId === providerId) || null;
