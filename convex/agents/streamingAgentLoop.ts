@@ -569,8 +569,14 @@ ${contextSummary}
         result = await runOnce(modelProviderFor(selectedModel));
       } catch (e: any) {
         const msg = String(e?.message || e);
-        // Fallback: if OpenAI-hosted model produced no output, retry via OpenRouter
-        if (selectedModel.startsWith("openai/") && /No output generated/i.test(msg)) {
+        // Fallback: if OpenAI-hosted model errors on streaming or produced no output, retry via OpenRouter
+        const shouldFallback =
+          selectedModel.startsWith("openai/") && (
+            /No output generated/i.test(msg) ||
+            /must be verified to stream/i.test(msg) ||
+            /unsupported_value/i.test(msg)
+          );
+        if (shouldFallback) {
           result = await runOnce(openrouter(selectedModel, reasoningOptions));
         } else {
           throw e;

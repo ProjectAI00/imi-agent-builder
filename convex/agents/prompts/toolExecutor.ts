@@ -42,5 +42,5 @@ export const toolExecutor: SubagentDefinition = {
   description: "Execute API integrations and multi-step tool workflows. Use when the user requests actions with external apps (Gmail, Slack, Notion, etc.)",
   tools: ["app_integrations", "memory_search"],
   systemPrompt: TOOL_EXECUTOR_PROMPT,
-  model: process.env.OR_MODEL_EXECUTOR || process.env.OR_MODEL || "openai/gpt-5-codex",
+  model: process.env.OR_MODEL_EXECUTOR || process.env.OR_MODEL || "openai/gpt-5-mini",
 };
