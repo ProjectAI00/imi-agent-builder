@@ -42,6 +42,15 @@ export const upsertScratchpad = internalMutation({
     metadata: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
+    const summarize = (v: any, max = 16_000) => {
+      try {
+        const s = typeof v === 'string' ? v : JSON.stringify(v);
+        return s.length > max ? s.slice(0, max) : s;
+      } catch {
+        return v && typeof v.toString === 'function' ? String(v).slice(0, max) : null;
+      }
+    };
+
     const now = Date.now();
     const existing = await ctx.db
       .query(SCRATCHPAD_TABLE)
@@ -53,7 +62,7 @@ export const upsertScratchpad = internalMutation({
         status: args.status,
         updatedAt: now,
         lastEventAt: now,
-        metadata: args.metadata ?? existing.metadata,
+        metadata: args.metadata !== undefined ? summarize(args.metadata) : existing.metadata,
       });
       return existing._id;
     }
@@ -69,7 +78,7 @@ export const upsertScratchpad = internalMutation({
       updatedAt: now,
       steps: [],
       artifacts: [],
-      metadata: args.metadata,
+      metadata: args.metadata !== undefined ? summarize(args.metadata) : undefined,
     });
   },
 });
@@ -90,6 +99,15 @@ export const recordStepProgress = internalMutation({
     }),
   },
   handler: async (ctx, args) => {
+    const summarize = (v: any, max = 16_000) => {
+      try {
+        const s = typeof v === 'string' ? v : JSON.stringify(v);
+        return s.length > max ? s.slice(0, max) : s;
+      } catch {
+        return v && typeof v.toString === 'function' ? String(v).slice(0, max) : null;
+      }
+    };
+
     const existing = await ctx.db
       .query(SCRATCHPAD_TABLE)
       .withIndex("by_jobId", (q) => q.eq("jobId", args.jobId))
@@ -110,7 +128,7 @@ export const recordStepProgress = internalMutation({
         startedAt: args.step.startedAt ?? steps[idx]?.startedAt ?? now,
         completedAt: args.step.completedAt ?? steps[idx]?.completedAt,
         retries: args.step.retries ?? steps[idx]?.retries ?? 0,
-        result: args.step.result ?? steps[idx]?.result,
+        result: summarize(args.step.result ?? steps[idx]?.result),
         error: args.step.error,
         rollbackStatus: args.step.rollbackStatus ?? steps[idx]?.rollbackStatus,
       };

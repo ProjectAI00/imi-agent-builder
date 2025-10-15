@@ -65,12 +65,17 @@ export const streamAgentResponse = internalAction({
     const pendingMessageId = pendingMessage.messages[0]?._id as string | undefined;
     let accumulatedText = pendingMessage.messages[0]?.text ?? "";
     let lastUpdate = Date.now();
+    const MAX_MSG_BYTES = 900_000; // keep well under Convex 1 MiB limit
+
+    // Simple byte-safe slice (assumes ASCII/UTF-8 text; acceptable for safety cap)
+    const capText = (s: string, maxBytes: number) => s.length > maxBytes ? s.slice(0, maxBytes) : s;
 
     const flushMessage = async (force = false) => {
       if (!pendingMessageId) return;
       if (!force && Date.now() - lastUpdate < 90) return;
 
       try {
+        accumulatedText = capText(accumulatedText, MAX_MSG_BYTES);
         await ctx.runMutation(components.agent.messages.updateMessage as any, {
           messageId: pendingMessageId,
           patch: {
@@ -117,13 +122,13 @@ export const streamAgentResponse = internalAction({
       });
 
       if (pendingMessageId) {
-        accumulatedText = result.finalText;
+        accumulatedText = capText(result.finalText, MAX_MSG_BYTES);
         await ctx.runMutation(components.agent.messages.updateMessage as any, {
           messageId: pendingMessageId,
           patch: {
             message: {
               role: "assistant",
-              content: result.finalText,
+              content: accumulatedText,
             },
             status: "success",
             finishReason: "stop",

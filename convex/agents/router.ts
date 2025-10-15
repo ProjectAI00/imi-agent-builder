@@ -44,8 +44,9 @@ export const route = internalAction({
         // Continue anyway - Layer 2 will work without context
       }
 
-      // Primary: event-streaming agent loop
-      if (process.env.STREAMING_AGENT_ENABLED === "true") {
+      // Primary: event-streaming agent loop (default to enabled unless explicitly disabled)
+      const streamingEnabled = process.env.STREAMING_AGENT_ENABLED !== "false";
+      if (streamingEnabled) {
         try {
           await ctx.runAction(internal.agents.streamingAgentAction.streamAgentResponse, {
             threadId,
