@@ -525,13 +525,14 @@ ${contextSummary}
         return openrouter(name, reasoningOptions);
       };
 
-      const result = await streamText({
-        model: modelProviderFor(selectedModel),
-        system: systemMessage,
-        messages: conversationHistory,
-        tools,
-        temperature,
-        onChunk: async ({ chunk }) => {
+      const runOnce = async (providerModel: LanguageModel) =>
+        streamText({
+          model: providerModel,
+          system: systemMessage,
+          messages: conversationHistory,
+          tools,
+          temperature,
+          onChunk: async ({ chunk }) => {
           const c: any = chunk;
           if (!c) return;
 
@@ -560,8 +561,21 @@ ${contextSummary}
               break;
             }
           }
+          }
+        });
+
+      let result;
+      try {
+        result = await runOnce(modelProviderFor(selectedModel));
+      } catch (e: any) {
+        const msg = String(e?.message || e);
+        // Fallback: if OpenAI-hosted model produced no output, retry via OpenRouter
+        if (selectedModel.startsWith("openai/") && /No output generated/i.test(msg)) {
+          result = await runOnce(openrouter(selectedModel, reasoningOptions));
+        } else {
+          throw e;
         }
-      });
+      }
 
       const resolvedText = result.text ? await result.text : streamedText;
       finalText = resolvedText || streamedText;
