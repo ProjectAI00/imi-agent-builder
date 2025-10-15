@@ -146,6 +146,52 @@ npm run build        # Build for production
 npm run start        # Start production server
 npm run lint         # Run ESLint
 npm run lint:fix     # Fix ESLint errors automatically
+
+## Claude Orchestrator (Plan A)
+
+- Route: `POST /api/orchestrate/claude`
+- Purpose: Run multi-step orchestration using the Claude Agent SDK while delegating tools/state to Convex.
+- Config:
+  - `CLAUDE_AGENT_ENABLED=true`
+  - `ORCHESTRATOR_PROVIDER=claude`
+  - `ANTHROPIC_API_KEY=...`
+  - `NEXT_PUBLIC_CONVEX_URL=...`
+
+Request body:
+```
+{
+  "threadId": "...",
+  "userId": "...",
+  "promptMessageId": "...", // optional
+  "userMessage": "..."       // optional (fallback to last user message planned in v2)
+}
+```
+
+Response:
+```
+{ ok: true, threadId, userId, text }
+```
+
+Note: In v1 the route returns final text only (no SSE). Next we can wire it to append messages back to Convex or stream tokens.
+
+### Local Dev Tunnel (Cloudflare)
+
+Use Cloudflare Tunnel so Convex can reach your local orchestrator route.
+
+1) Install cloudflared:
+```
+brew install cloudflare/cloudflare/cloudflared
+```
+2) Start Next and the tunnel:
+```
+npm run dev
+npm run tunnel:cf
+```
+3) Restart Convex dev:
+```
+npx convex dev
+```
+This script sets `ORCHESTRATOR_URL` in Convex using a clean env file derived from `CONVEX_DEPLOYMENT` in `.env.local`.
 ```
 
 ## Usage Examples

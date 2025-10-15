@@ -18,10 +18,9 @@ export const createInternal = internalMutation({
     userId: v.string(),
     title: v.optional(v.string()),
     contextKey: v.optional(v.string()),
-    agentType: v.optional(v.string()), // "casual" or "roast"
   },
   handler: async (ctx, args) => {
-    const { userId, title, contextKey, agentType = "casual" } = args;
+    const { userId, title, contextKey } = args;
 
     // Create thread in Agent component
     const threadId = await createAgentThread(ctx, components.agent, {
@@ -36,7 +35,6 @@ export const createInternal = internalMutation({
       userId,
       title,
       contextKey,
-      agentType,
       messageCount: 0,
       lastMessageAt: Date.now(),
       createdAt: Date.now(),
@@ -47,33 +45,23 @@ export const createInternal = internalMutation({
 });
 
 /**
- * Create a new thread for a user (action wrapper that triggers AI init for roast agent)
+ * Create a new thread for a user
  */
 export const create = action({
   args: {
     userId: v.string(),
     title: v.optional(v.string()),
     contextKey: v.optional(v.string()),
-    agentType: v.optional(v.string()), // "casual" or "roast"
   },
   handler: async (ctx, args): Promise<{ threadId: string }> => {
-    const { userId, title, contextKey, agentType = "casual" } = args;
+    const { userId, title, contextKey } = args;
 
     // Create the thread
     const result: { threadId: string } = await ctx.runMutation(internal.chat.threads.createInternal, {
       userId,
       title,
       contextKey,
-      agentType,
     });
-
-    // If it's a roast agent thread, schedule the first AI message (don't await)
-    if (agentType === "roast") {
-      ctx.scheduler.runAfter(0, internal.chat.initRoast.initializeRoast, {
-        threadId: result.threadId,
-        userId,
-      });
-    }
 
     return result;
   },
@@ -198,10 +186,9 @@ export const getOrCreate = mutation({
   args: {
     userId: v.string(),
     contextKey: v.optional(v.string()),
-    agentType: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const { userId, contextKey, agentType = "casual" } = args;
+    const { userId, contextKey } = args;
 
     // Try to find existing thread with this contextKey
     if (contextKey) {
@@ -230,7 +217,6 @@ export const getOrCreate = mutation({
       threadId,
       userId,
       contextKey,
-      agentType,
       messageCount: 0,
       lastMessageAt: Date.now(),
       createdAt: Date.now(),

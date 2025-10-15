@@ -12,12 +12,10 @@ import { Card } from "@/components/ui/card";
  */
 export default function ConvexChatPage() {
   const [input, setInput] = useState("");
-  const [agentType, setAgentType] = useState<"casual" | "professional">("casual");
 
   const { messages, sendMessage, isLoading, threadId } = useConvexChat({
     userId: "demo-user",
     contextKey: "demo-chat",
-    agentType,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,29 +39,13 @@ export default function ConvexChatPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Convex Chat Demo</h1>
           <p className="text-gray-600">
-            Testing Convex backend with Luna (casual) and Assistant (professional)
+            Chat with Imi - Your AI Assistant
           </p>
           {threadId && (
             <p className="text-sm text-gray-500 mt-2">
               Thread ID: <code className="bg-gray-100 px-2 py-1 rounded">{threadId}</code>
             </p>
           )}
-        </div>
-
-        {/* Agent Selector */}
-        <div className="mb-4 flex gap-2">
-          <Button
-            variant={agentType === "casual" ? "default" : "outline"}
-            onClick={() => setAgentType("casual")}
-          >
-            🌙 Luna (Casual)
-          </Button>
-          <Button
-            variant={agentType === "professional" ? "default" : "outline"}
-            onClick={() => setAgentType("professional")}
-          >
-            💼 Assistant (Professional)
-          </Button>
         </div>
 
         {/* Messages */}
@@ -89,7 +71,7 @@ export default function ConvexChatPage() {
                     }`}
                   >
                     <div className="text-xs opacity-70 mb-1">
-                      {msg.role === "user" ? "You" : agentType === "casual" ? "Luna" : "Assistant"}
+                      {msg.role === "user" ? "You" : "Imi"}
                     </div>
                     <div className="whitespace-pre-wrap">{msg.content}</div>
                     {msg.status === "pending" && (
@@ -108,11 +90,7 @@ export default function ConvexChatPage() {
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={
-              agentType === "casual"
-                ? "Ask Luna something..."
-                : "Ask Assistant something..."
-            }
+            placeholder="Ask Imi something..."
             disabled={isLoading}
             className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
@@ -126,10 +104,10 @@ export default function ConvexChatPage() {
           <h2 className="font-semibold mb-2">✨ Features Enabled:</h2>
           <ul className="space-y-1 text-sm text-gray-700">
             <li>✅ Real-time message streaming</li>
-            <li>✅ Twitter search tool</li>
-            <li>✅ Pinterest search tool</li>
-            <li>✅ Usage tracking</li>
-            <li>✅ Two agent personalities</li>
+            <li>✅ 3-Layer agent architecture</li>
+            <li>✅ Context engine (memory search)</li>
+            <li>✅ Tool calling (500+ apps via Composio)</li>
+            <li>✅ Twitter search integration</li>
           </ul>
         </div>
       </div>

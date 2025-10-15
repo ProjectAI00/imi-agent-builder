@@ -1,14 +1,13 @@
 import { v } from "convex/values";
 import { action, internalAction, internalMutation } from "../_generated/server";
 import { internal, components } from "../_generated/api";
-import { getAgent } from "../agents/index";
 
 /**
  * Send Message and Generate Response
  *
  * This action:
  * 1. Saves the user's message
- * 2. Schedules the AI response generation
+ * 2. Schedules the AI response generation via router
  * 3. Returns immediately for fast UI feedback
  */
 export const send = action({
@@ -16,30 +15,36 @@ export const send = action({
     threadId: v.string(),
     prompt: v.string(),
     userId: v.optional(v.string()),
-    agentType: v.optional(v.union(v.literal("casual"), v.literal("roast"))),
     skipResponse: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const { threadId, prompt, userId = "anonymous", agentType = "casual", skipResponse } = args;
+    const { threadId, prompt, userId = "anonymous", skipResponse } = args;
 
-    // Get agent based on type
-    const agent = getAgent(agentType);
-
-    // Save the user's message
-    const { messageId } = await agent.saveMessage(ctx, {
+    // Save the user's message directly (no agent needed)
+    const messages = await ctx.runMutation(components.agent.messages.addMessages as any, {
       threadId,
-      prompt,
-      skipEmbeddings: false,
+      userId,
+      messages: [
+        {
+          message: {
+            role: "user",
+            content: prompt,
+          },
+          text: prompt,
+        },
+      ],
     });
+
+    const messageId = messages.messages[0]?._id as string;
 
     // Skip scheduling for internal/system notes or when explicitly requested
     const isSystemNote = prompt.trim().startsWith("[SYSTEM:");
     if (!skipResponse && !isSystemNote) {
-      await ctx.scheduler.runAfter(0, internal.chat.sendMessage.generateResponse, {
+      await ctx.scheduler.runAfter(0, internal.agents.router.route, {
         threadId,
         promptMessageId: messageId,
         userId,
-        agentType,
+        userMessage: prompt,
       });
     }
 
@@ -56,88 +61,59 @@ export const send = action({
   },
 });
 
+// Router now lives at internal.agents.router.route
+// All message handling goes through streamingAgentAction
+
 /**
- * Internal action to generate the AI response
- * Routes to either direct agent (simple) or workflow (complex)
+ * Call the Claude orchestrator HTTP endpoint and append the assistant message.
  */
-export const generateResponse = internalAction({
+export const generateClaudeResponse = internalAction({
   args: {
     threadId: v.string(),
     promptMessageId: v.string(),
     userId: v.string(),
-    agentType: v.optional(v.union(v.literal("casual"), v.literal("roast"))),
+    userMessage: v.string(),
   },
   handler: async (ctx, args) => {
-    const { threadId, promptMessageId, userId, agentType = "casual" } = args;
+    const { threadId, userId, userMessage } = args;
 
-    try {
-      // Get the user's message text
-      const messagesResult = await ctx.runQuery(components.agent.messages.listMessagesByThreadId, {
-        threadId,
-        order: "desc" as const,
-      });
+    const base =
+      process.env.ORCHESTRATOR_URL ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
 
-      const userMessage = messagesResult.page.find((m: any) => m._id === promptMessageId);
+    const url = `${base.replace(/\/$/, "")}/api/orchestrate/claude`;
 
-      if (!userMessage || !userMessage.text) {
-        throw new Error("User message not found");
-      }
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ threadId, userId, userMessage }),
+    });
 
-      // ✅ SMART ROUTING: Analyze if this is simple or complex
-      const { analyzeTaskComplexity } = await import("../lib/taskAnalyzer");
-      const analysis = await analyzeTaskComplexity(userMessage.text);
-
-      if (analysis.isComplex) {
-        // Complex multi-step → Use Workflow for orchestration
-        console.log(`[Router → Workflow] Complex task: ${analysis.reasoning}`);
-
-        const { WorkflowManager } = await import("@convex-dev/workflow");
-        const workflow = new WorkflowManager(components.workflow);
-
-        const workflowId = await workflow.start(
-          ctx,
-          internal.workflows.agentOrchestration.executeUserRequest,
-          {
-            threadId,
-            userId,
-            userMessage: userMessage.text,
-            promptMessageId,
-          }
-        );
-
-        console.log(`[Router → Workflow] Started: ${workflowId}`);
-      } else {
-        // Simple single-step → Use Agent directly (fast!)
-        console.log(`[Router → Agent] Simple task: ${analysis.reasoning}`);
-
-        const agent = getAgent(agentType);
-        const result = await agent.streamText(
-          ctx,
-          { threadId, userId },
-          { promptMessageId },
-          {
-            saveStreamDeltas: {
-              chunking: "word",
-              throttleMs: 100,
-            }
-          }
-        );
-
-        await result.consumeStream();
-        console.log(`[Router → Agent] Completed`);
-      }
-
-    } catch (error) {
-      console.error("[Router] Error:", error);
-
-      await ctx.runMutation(internal.chat.sendMessage.logError, {
-        threadId,
-        promptMessageId,
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
-
-      throw error;
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => "");
+      throw new Error(`Orchestrator error: ${resp.status} ${text}`);
     }
+
+    const data = (await resp.json()) as any;
+    const assistantText = (data && (data.text || data.result || "")).toString();
+
+    if (!assistantText) return;
+
+    await ctx.runMutation(components.agent.messages.addMessages as any, {
+      threadId,
+      messages: [
+        {
+          message: {
+            role: "assistant",
+            content: assistantText,
+          },
+          text: assistantText,
+          status: "success",
+          finishReason: "stop",
+        },
+      ],
+    } as any);
   },
 });
 

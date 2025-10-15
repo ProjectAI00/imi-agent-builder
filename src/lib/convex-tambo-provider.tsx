@@ -14,13 +14,11 @@ import { useConvexChat } from "@/hooks/use-convex-chat";
 interface ConvexTamboAdapterProps {
   children: ReactNode;
   userId: string;
-  agentType?: "casual" | "professional";
 }
 
 export function ConvexTamboAdapter({
   children,
   userId,
-  agentType = "casual",
 }: ConvexTamboAdapterProps) {
   // This is a minimal Tambo provider just to satisfy the UI components
   // The actual backend calls go through Convex

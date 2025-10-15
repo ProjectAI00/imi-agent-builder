@@ -8,44 +8,43 @@
  * @module
  */
 
-import type * as agents_config from "../agents/config.js";
-import type * as agents_imiAgent from "../agents/imiAgent.js";
-import type * as agents_index from "../agents/index.js";
-import type * as agents_roastAgent from "../agents/roastAgent.js";
+import type * as agents_prompts_contextAnalyzer from "../agents/prompts/contextAnalyzer.js";
+import type * as agents_prompts_imi from "../agents/prompts/imi.js";
+import type * as agents_prompts_toolExecutor from "../agents/prompts/toolExecutor.js";
+import type * as agents_router from "../agents/router.js";
+import type * as agents_streamingAgentAction from "../agents/streamingAgentAction.js";
+import type * as agents_streamingAgentLoop from "../agents/streamingAgentLoop.js";
+import type * as agents_subagents_index from "../agents/subagents/index.js";
+import type * as agents_subagents_toolExecutor from "../agents/subagents/toolExecutor.js";
 import type * as auth_betterAuth from "../auth/betterAuth.js";
-import type * as chat_initRoast from "../chat/initRoast.js";
+import type * as bridge_appIntegrationsAction from "../bridge/appIntegrationsAction.js";
+import type * as bridge_searchMemoryAction from "../bridge/searchMemoryAction.js";
+import type * as bridge_searchTwitterAction from "../bridge/searchTwitterAction.js";
 import type * as chat_messages from "../chat/messages.js";
 import type * as chat_sendMessage from "../chat/sendMessage.js";
 import type * as chat_threads from "../chat/threads.js";
+import type * as context_contextProvider from "../context/contextProvider.js";
+import type * as context_parallelSearch from "../context/parallelSearch.js";
+import type * as context_queryAnalyzer from "../context/queryAnalyzer.js";
+import type * as context_queryRewriter from "../context/queryRewriter.js";
+import type * as context_scratchpad from "../context/scratchpad.js";
+import type * as context_storage from "../context/storage.js";
 import type * as crons from "../crons.js";
-import type * as debug_backfillMemories from "../debug/backfillMemories.js";
-import type * as debug_checkAuthUsers from "../debug/checkAuthUsers.js";
-import type * as debug_checkMemories from "../debug/checkMemories.js";
-import type * as debug_checkToolRouterSessions from "../debug/checkToolRouterSessions.js";
-import type * as debug_checkUserMemories from "../debug/checkUserMemories.js";
-import type * as debug_cleanupStaleConnections from "../debug/cleanupStaleConnections.js";
-import type * as debug_getFullMemory from "../debug/getFullMemory.js";
-import type * as debug_getRecentMemories from "../debug/getRecentMemories.js";
 import type * as lib_getToolRouterClient from "../lib/getToolRouterClient.js";
 import type * as lib_taskAnalyzer from "../lib/taskAnalyzer.js";
 import type * as lib_toolRouterClient from "../lib/toolRouterClient.js";
+import type * as logs_telemetry from "../logs/telemetry.js";
 import type * as memory_extractMemories from "../memory/extractMemories.js";
-import type * as migrations_backfillEmbeddings from "../migrations/backfillEmbeddings.js";
 import type * as stats from "../stats.js";
-import type * as test_testAppIntegrations from "../test/testAppIntegrations.js";
-import type * as test_testToolRouter from "../test/testToolRouter.js";
 import type * as toolRouter_sessions from "../toolRouter/sessions.js";
 import type * as toolRouter_tasks from "../toolRouter/tasks.js";
 import type * as tools_appIntegrations from "../tools/appIntegrations.js";
 import type * as tools_searchMemory from "../tools/searchMemory.js";
 import type * as tools_searchMemoryHelpers from "../tools/searchMemoryHelpers.js";
 import type * as tools_searchTwitter from "../tools/searchTwitter.js";
-import type * as tools_toolLogger from "../tools/toolLogger.js";
 import type * as usage from "../usage.js";
 import type * as users_getOrCreate from "../users/getOrCreate.js";
 import type * as workers_twitterMonitor from "../workers/twitterMonitor.js";
-import type * as workflows_agentOrchestration from "../workflows/agentOrchestration.js";
-import type * as workflows_steps from "../workflows/steps.js";
 
 import type {
   ApiFromModules,
@@ -62,44 +61,43 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
-  "agents/config": typeof agents_config;
-  "agents/imiAgent": typeof agents_imiAgent;
-  "agents/index": typeof agents_index;
-  "agents/roastAgent": typeof agents_roastAgent;
+  "agents/prompts/contextAnalyzer": typeof agents_prompts_contextAnalyzer;
+  "agents/prompts/imi": typeof agents_prompts_imi;
+  "agents/prompts/toolExecutor": typeof agents_prompts_toolExecutor;
+  "agents/router": typeof agents_router;
+  "agents/streamingAgentAction": typeof agents_streamingAgentAction;
+  "agents/streamingAgentLoop": typeof agents_streamingAgentLoop;
+  "agents/subagents/index": typeof agents_subagents_index;
+  "agents/subagents/toolExecutor": typeof agents_subagents_toolExecutor;
   "auth/betterAuth": typeof auth_betterAuth;
-  "chat/initRoast": typeof chat_initRoast;
+  "bridge/appIntegrationsAction": typeof bridge_appIntegrationsAction;
+  "bridge/searchMemoryAction": typeof bridge_searchMemoryAction;
+  "bridge/searchTwitterAction": typeof bridge_searchTwitterAction;
   "chat/messages": typeof chat_messages;
   "chat/sendMessage": typeof chat_sendMessage;
   "chat/threads": typeof chat_threads;
+  "context/contextProvider": typeof context_contextProvider;
+  "context/parallelSearch": typeof context_parallelSearch;
+  "context/queryAnalyzer": typeof context_queryAnalyzer;
+  "context/queryRewriter": typeof context_queryRewriter;
+  "context/scratchpad": typeof context_scratchpad;
+  "context/storage": typeof context_storage;
   crons: typeof crons;
-  "debug/backfillMemories": typeof debug_backfillMemories;
-  "debug/checkAuthUsers": typeof debug_checkAuthUsers;
-  "debug/checkMemories": typeof debug_checkMemories;
-  "debug/checkToolRouterSessions": typeof debug_checkToolRouterSessions;
-  "debug/checkUserMemories": typeof debug_checkUserMemories;
-  "debug/cleanupStaleConnections": typeof debug_cleanupStaleConnections;
-  "debug/getFullMemory": typeof debug_getFullMemory;
-  "debug/getRecentMemories": typeof debug_getRecentMemories;
   "lib/getToolRouterClient": typeof lib_getToolRouterClient;
   "lib/taskAnalyzer": typeof lib_taskAnalyzer;
   "lib/toolRouterClient": typeof lib_toolRouterClient;
+  "logs/telemetry": typeof logs_telemetry;
   "memory/extractMemories": typeof memory_extractMemories;
-  "migrations/backfillEmbeddings": typeof migrations_backfillEmbeddings;
   stats: typeof stats;
-  "test/testAppIntegrations": typeof test_testAppIntegrations;
-  "test/testToolRouter": typeof test_testToolRouter;
   "toolRouter/sessions": typeof toolRouter_sessions;
   "toolRouter/tasks": typeof toolRouter_tasks;
   "tools/appIntegrations": typeof tools_appIntegrations;
   "tools/searchMemory": typeof tools_searchMemory;
   "tools/searchMemoryHelpers": typeof tools_searchMemoryHelpers;
   "tools/searchTwitter": typeof tools_searchTwitter;
-  "tools/toolLogger": typeof tools_toolLogger;
   usage: typeof usage;
   "users/getOrCreate": typeof users_getOrCreate;
   "workers/twitterMonitor": typeof workers_twitterMonitor;
-  "workflows/agentOrchestration": typeof workflows_agentOrchestration;
-  "workflows/steps": typeof workflows_steps;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
 

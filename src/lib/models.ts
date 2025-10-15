@@ -1,26 +1,31 @@
 import { openai } from "@ai-sdk/openai";
-import { groq } from "@ai-sdk/groq";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { LanguageModel } from "ai";
+import {
+  MODEL_CODING,
+  MODEL_DEFAULT_FALLBACK,
+  MODEL_FAST,
+  resolveModel,
+} from "../../config/models";
 
 const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY!,
 });
 
+const DEFAULT_MODEL_NAME = resolveModel(MODEL_DEFAULT_FALLBACK);
+const FAST_MODEL_NAME = resolveModel(MODEL_FAST);
+const CODING_MODEL_NAME = resolveModel(MODEL_CODING);
+
 export const allModels = {
   openai: {
     // Note: GPT‑5 access is routed via OpenRouter, not the native OpenAI provider
   },
-  groq: {
-    "moonshotai/kimi-k2-instruct": groq("moonshotai/kimi-k2-instruct"),
-  },
   openrouter: {
     // GPT‑5 via OpenRouter
     "openai/gpt-5-mini": openrouter("openai/gpt-5-mini"),
-    "openai/gpt-5-nano": openrouter("openai/gpt-5-nano"),
-    "z-ai/glm-4.5": openrouter("z-ai/glm-4.5"),
-    "x-ai/grok-code-fast-1": openrouter("x-ai/grok-code-fast-1"),
-    "qwen/qwen3-coder": openrouter("qwen/qwen3-coder"),
+    "openai/gpt-5-nano": openrouter(FAST_MODEL_NAME),
+    "z-ai/glm-4.5": openrouter(DEFAULT_MODEL_NAME),
+    "qwen/qwen3-coder": openrouter(CODING_MODEL_NAME),
     "openai/gpt-oss-120b": openrouter("openai/gpt-oss-120b"),
     // Friendly alias for default model
     "IMI Fast": openrouter("openai/gpt-oss-120b"),
@@ -31,9 +36,7 @@ export const allModels = {
 export const modelTemperatures = {
   "openai/gpt-5-mini": 0.7,
   "openai/gpt-5-nano": 0.7,
-  "moonshotai/kimi-k2-instruct": 0.6, // Balanced temperature for focused yet creative responses
   "z-ai/glm-4.5": 0.7,
-  "x-ai/grok-code-fast-1": 0.3,
   "qwen/qwen3-coder": 0.3, // Lower temperature for coding tasks
   "openai/gpt-oss-120b": 0.7,
   "IMI Fast": 0.7,
@@ -44,7 +47,7 @@ export const isToolCallUnsupportedModel = (_model: LanguageModel) => {
   return false;
 };
 
-export const DEFAULT_MODEL = "x-ai/grok-code-fast-1";
+export const DEFAULT_MODEL = DEFAULT_MODEL_NAME;
 
 // DEFAULT_MODEL lives in openrouter provider now
 const fallbackModel = (allModels.openrouter as any)[
@@ -96,7 +99,6 @@ export const getModelTemperature = (modelName: string): number => {
 // Available models for easy reference
 export const availableModels = {
   // Fast coding models
-  GROK_CODE_FAST: "x-ai/grok-code-fast-1",
   QWEN_CODER: "qwen/qwen3-coder",
   
   // General purpose models
@@ -108,6 +110,5 @@ export const availableModels = {
   GPT_5_NANO: "openai/gpt-5-nano",
   
   // Specialized models
-  GLM_4_5: "z-ai/glm-4.5",
-  KIMI: "moonshotai/kimi-k2-instruct",
+  GLM_4_5: DEFAULT_MODEL_NAME,
 } as const;

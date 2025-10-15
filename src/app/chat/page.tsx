@@ -16,7 +16,6 @@ export default function ChatPage() {
   const { messages, sendMessage, isLoading, threadId } = useConvexChat({
     userId,
     threadId: selectedThreadId,
-    agentType: "roast",
   });
 
   const { threads, deleteThread } = useConvexThreads(userId);
@@ -57,7 +56,7 @@ export default function ChatPage() {
           threads={threads}
           currentThreadId={threadId}
           isPending={isLoading}
-          agentName="RoastMaster"
+          agentName="Imi"
           onSendMessage={sendMessage}
           onThreadSelect={handleThreadSelect}
           onNewThread={handleNewThread}

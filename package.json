@@ -11,10 +11,11 @@
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
-    "init": "npx tambo init"
+    "init": "npx tambo init",
+    "tunnel:cf": "node scripts/cf-tunnel.js"
   },
   "dependencies": {
-    "@ai-sdk/groq": "^2.0.21",
+    "@anthropic-ai/claude-agent-sdk": "^0.1.0",
     "@ai-sdk/openai": "^2.0.34",
     "@convex-dev/agent": "^0.2.10",
     "@convex-dev/workflow": "^0.2.6",
@@ -47,7 +48,8 @@
     "react-icon-cloud": "^4.1.7",
     "react-markdown": "^10.1.0",
     "reactflow": "^11.10.1",
-    "recharts": "^3.1.2"
+    "recharts": "^3.1.2",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

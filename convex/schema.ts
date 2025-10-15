@@ -94,9 +94,6 @@ export default defineSchema({
     summary: v.optional(v.string()),
     contextKey: v.optional(v.string()), // For Tambo compatibility
 
-    // Agent configuration
-    agentType: v.string(), // "casual" or "professional"
-
     // Metadata
     messageCount: v.number(),
     lastMessageAt: v.number(),
@@ -222,4 +219,109 @@ export default defineSchema({
     .index("by_userId", ["userId"])
     .index("by_status", ["status"])
     .index("by_userId_and_status", ["userId", "status"]),
+
+  // Plans for two-agent architecture
+  plans: defineTable({
+    userId: v.string(),
+    threadId: v.string(),
+
+    // Plan details
+    goal: v.string(),
+    steps: v.array(v.object({
+      id: v.string(),
+      description: v.string(),
+      action: v.string(), // Tool action name
+      args: v.any(), // Tool arguments
+      status: v.string(), // "pending", "running", "completed", "failed"
+      result: v.optional(v.any()),
+      error: v.optional(v.string()),
+      retryCount: v.number(),
+      executionType: v.string(), // "parallel" or "sequential"
+      dependsOn: v.optional(v.array(v.string())), // Step IDs this step depends on
+    })),
+
+    // Execution status
+    status: v.string(), // "pending", "running", "completed", "failed", "cancelled"
+    currentStepIndex: v.number(),
+    progress: v.string(), // Human-readable progress message
+
+    // Metadata
+    createdAt: v.number(),
+    startedAt: v.optional(v.number()),
+    completedAt: v.optional(v.number()),
+
+    // Results
+    finalResult: v.optional(v.any()),
+    error: v.optional(v.string()),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_threadId", ["threadId"])
+    .index("by_status", ["status"])
+    .index("by_userId_and_status", ["userId", "status"]),
+
+  // Scratchpad state for planner/executor handoff
+  executionScratchpads: defineTable({
+    jobId: v.string(),
+    userId: v.string(),
+    threadId: v.string(),
+    planId: v.optional(v.string()),
+
+    status: v.string(), // pending, running, blocked, completed, failed
+    lastEventAt: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+
+    steps: v.array(v.object({
+      stepId: v.string(),
+      description: v.optional(v.string()),
+      status: v.string(),
+      startedAt: v.optional(v.number()),
+      completedAt: v.optional(v.number()),
+      retries: v.number(),
+      result: v.optional(v.any()),
+      error: v.optional(v.string()),
+      rollbackStatus: v.optional(v.string()),
+    })),
+
+    artifacts: v.array(v.object({
+      key: v.string(),
+      value: v.any(),
+      visibility: v.optional(v.string()), // internal, user
+      createdAt: v.number(),
+      linkedStepId: v.optional(v.string()),
+    })),
+
+    metadata: v.optional(v.any()),
+  })
+    .index("by_jobId", ["jobId"])
+    .index("by_threadId", ["threadId"])
+    .index("by_userId", ["userId"])
+    .index("by_status", ["status"]),
+
+  // Thread context cache - for contextAgent to provide info to imiAgent
+  threadContext: defineTable({
+    threadId: v.string(),
+    userId: v.string(),
+
+    // Context metadata
+    contextType: v.string(), // "memory", "twitter", "app_data"
+    summary: v.string(), // Summarized context for imiAgent
+
+    // Reference tracking
+    relevantTo: v.optional(v.string()), // Message ID that triggered this context
+
+    // Lifecycle
+    createdAt: v.number(),
+    expiresAt: v.number(), // Auto-expire old context (5-10 minutes)
+
+    // Optional: store raw data for debugging
+    rawData: v.optional(v.any()),
+
+    // Priority/relevance scoring
+    relevanceScore: v.optional(v.number()),
+  })
+    .index("by_threadId", ["threadId"])
+    .index("by_threadId_and_type", ["threadId", "contextType"])
+    .index("by_expiresAt", ["expiresAt"])
+    .index("by_userId", ["userId"]),
 });

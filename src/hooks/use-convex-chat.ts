@@ -16,11 +16,10 @@ export interface ConvexChatOptions {
   userId?: string;
   contextKey?: string;
   threadId?: string | null;
-  agentType?: "casual" | "roast";
 }
 
 export function useConvexChat(options: ConvexChatOptions = {}) {
-  const { userId = "anonymous", contextKey, threadId: externalThreadId, agentType = "casual" } = options;
+  const { userId = "anonymous", contextKey, threadId: externalThreadId } = options;
 
   // State
   const [internalThreadId, setInternalThreadId] = useState<string | null>(null);
@@ -77,7 +76,6 @@ export function useConvexChat(options: ConvexChatOptions = {}) {
         if (!activeThreadId && externalThreadId === null) {
           const newThread = await createThreadAction({
             userId,
-            agentType,
           });
           activeThreadId = newThread.threadId;
           // Update internal thread ID which will trigger messages query
@@ -90,10 +88,9 @@ export function useConvexChat(options: ConvexChatOptions = {}) {
               threadId: activeThreadId,
               prompt: `[SYSTEM:TWITTER_HANDLE ${userId}]`,
               userId,
-              agentType,
               // Don't trigger an AI response for system notes
               skipResponse: true,
-            } as any);
+            });
           } catch (e) {
             console.warn("Failed to inject system handle note", e);
           }
@@ -107,7 +104,6 @@ export function useConvexChat(options: ConvexChatOptions = {}) {
           threadId: activeThreadId,
           prompt: content,
           userId,
-          agentType,
         });
 
         // Don't clear optimistic messages immediately
@@ -121,7 +117,7 @@ export function useConvexChat(options: ConvexChatOptions = {}) {
         setIsLoading(false);
       }
     },
-    [threadId, externalThreadId, userId, agentType, sendMessageAction, createThreadAction]
+    [threadId, externalThreadId, userId, sendMessageAction, createThreadAction]
   );
 
   // Transform Convex messages to Tambo format

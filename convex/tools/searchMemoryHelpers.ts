@@ -35,7 +35,25 @@ export const searchMemoriesLimited = internalQuery({
       .withIndex("by_userId_and_deleted", (q) =>
         q.eq("userId", userId).eq("deleted", false)
       )
-      .order("desc") // Most recent first
+      .order("desc")
+      .take(limit);
+
+    return memories;
+  },
+});
+
+export const fetchRecentMemories = internalQuery({
+  args: {
+    userId: v.string(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, { userId, limit = 50 }) => {
+    const memories = await ctx.db
+      .query("userMemories")
+      .withIndex("by_userId_and_deleted", (q) =>
+        q.eq("userId", userId).eq("deleted", false)
+      )
+      .order("desc")
       .take(limit);
 
     return memories;

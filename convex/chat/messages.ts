@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { query } from "../_generated/server";
+import { internalMutation, query } from "../_generated/server";
 import { components } from "../_generated/api";
 import { listUIMessages, syncStreams, vStreamArgs } from "@convex-dev/agent";
 
@@ -95,5 +95,37 @@ export const count = query({
       .first();
 
     return metadata?.messageCount || 0;
+  },
+});
+
+/**
+ * Append an assistant message (delta or final) without invoking imiAgent
+ */
+export const appendAssistantMessage = internalMutation({
+  args: {
+    threadId: v.string(),
+    content: v.string(),
+    status: v.optional(v.string()),
+    finishReason: v.optional(v.string()),
+    isDelta: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    const status = args.status ?? (args.isDelta ? "in_progress" : "success");
+    const finishReason = args.isDelta ? undefined : (args.finishReason ?? "stop");
+
+    await ctx.runMutation(components.agent.messages.addMessages as any, {
+      threadId: args.threadId,
+      messages: [
+        {
+          message: {
+            role: "assistant",
+            content: args.content,
+          },
+          text: args.content,
+          status,
+          ...(finishReason ? { finishReason } : {}),
+        },
+      ],
+    });
   },
 });
