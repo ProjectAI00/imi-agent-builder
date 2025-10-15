@@ -512,15 +512,16 @@ ${contextSummary}
       const toolCallsCollected: any[] = [];
 
       // OpenRouter model options (no provider override in payload)
-      const openRouterModelOptions: any = { reasoning: { exclude: true } };
+      // Use medium reasoning effort across providers; UI still hides chain-of-thought
+      const reasoningOptions: any = { reasoning: { effort: "medium" } };
 
       // Choose provider based on model prefix: use native OpenAI for "openai/*", otherwise OpenRouter
       const modelProviderFor = (name: string): LanguageModel => {
         if (name.startsWith("openai/")) {
           const native = name.replace(/^openai\//, "");
-          return openai(native);
+          return openai(native, reasoningOptions);
         }
-        return openrouter(name, openRouterModelOptions);
+        return openrouter(name, reasoningOptions);
       };
 
       const result = await streamText({
