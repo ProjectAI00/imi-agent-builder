@@ -519,7 +519,8 @@ ${contextSummary}
       const modelProviderFor = (name: string): LanguageModel => {
         if (name.startsWith("openai/")) {
           const native = name.replace(/^openai\//, "");
-          return openai(native, reasoningOptions);
+          // OpenAI provider in this SDK signature accepts only the model name here
+          return openai(native);
         }
         return openrouter(name, reasoningOptions);
       };
