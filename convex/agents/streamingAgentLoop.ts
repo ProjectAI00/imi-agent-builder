@@ -8,8 +8,9 @@
  * 4. Follows Anthropic's chain-of-thought patterns
  */
 
-import { streamText } from "ai";
+import { streamText, type LanguageModel } from "ai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { openai } from "@ai-sdk/openai";
 import { z } from "zod";
 import type { ActionCtx } from "../_generated/server";
 import { api, internal } from "../_generated/api";
@@ -511,12 +512,19 @@ ${contextSummary}
       const toolCallsCollected: any[] = [];
 
       // OpenRouter model options (no provider override in payload)
-      const openRouterModelOptions: any = {
-        reasoning: { exclude: true },
+      const openRouterModelOptions: any = { reasoning: { exclude: true } };
+
+      // Choose provider based on model prefix: use native OpenAI for "openai/*", otherwise OpenRouter
+      const modelProviderFor = (name: string): LanguageModel => {
+        if (name.startsWith("openai/")) {
+          const native = name.replace(/^openai\//, "");
+          return openai(native);
+        }
+        return openrouter(name, openRouterModelOptions);
       };
 
       const result = await streamText({
-        model: openrouter(selectedModel, openRouterModelOptions),
+        model: modelProviderFor(selectedModel),
         system: systemMessage,
         messages: conversationHistory,
         tools,
