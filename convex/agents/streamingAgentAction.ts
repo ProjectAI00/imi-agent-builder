@@ -42,10 +42,8 @@ export const streamAgentResponse = internalAction({
 
     const scratchpadJobId = `${threadId}:${promptMessageId}`;
 
-    // Simple confirmation gate: only allow delegation when user explicitly approves
-    const explicitApprove = /(\bokay\b|\bok\b|\byes\b|\byea?h\b|\bgo ahead\b|\bplease send\b|\bsend it\b|\bdo it\b|\bproceed\b|\bconfirm\b|\bship it\b)/i.test(
-      userMessage || ""
-    );
+    // Note: Tool access is not gated behind explicit approval.
+    // Safety-sensitive tools should enforce confirmations within their own flows.
 
     // Create pending assistant message to stream into
     const pendingMessage = await ctx.runMutation(components.agent.messages.addMessages as any, {
@@ -111,12 +109,8 @@ export const streamAgentResponse = internalAction({
         userMessage,
         maxIterations,
         model,
-        allowedTools:
-          allowedTools && allowedTools.length > 0
-            ? allowedTools
-            : explicitApprove
-            ? ["task"]
-            : [],
+        // Expose all tools by default unless an explicit allowlist is provided
+        allowedTools: allowedTools && allowedTools.length > 0 ? allowedTools : undefined,
         onEvent: handleEvent,
         scratchpadJobId,
         subagents: SUBAGENTS, // Enable Layer 3 tool calling via subagents
@@ -179,27 +173,19 @@ function formatEventsAsMessage(events: AgentEvent[]): string {
         break;
 
       case 'tool_call_start':
-        // Show tool invocation to user
-        parts.push(`\n\n*Using ${formatToolName(event.tool)}...*`);
+        // Do not surface tool invocation details to the user
         break;
 
       case 'tool_call_complete':
-        // Optionally show result summary (can be verbose)
-        if (shouldShowToolResult(event.tool)) {
-          const summary = summarizeToolResult(event.result);
-          if (summary) {
-            parts.push(`\n${summary}`);
-          }
-        }
+        // Do not surface tool results directly; the assistant will summarize as needed
         break;
 
       case 'subagent_start':
-        parts.push(`\n\n*Delegating to ${formatAgentName(event.agent)} specialist...*`);
+        // Hide subagent delegation plumbing from the user
         break;
 
       case 'subagent_complete':
-        // Include subagent result in the response
-        parts.push(`\n\n${event.result}`);
+        // Subagent output will be incorporated into the assistant's final text
         break;
 
       case 'error':
@@ -211,7 +197,7 @@ function formatEventsAsMessage(events: AgentEvent[]): string {
         break;
 
       case 'thinking':
-        // Only show thinking in debug mode
+        // Only show chain-of-thought when explicitly enabled
         if (process.env.SHOW_AGENT_THINKING === "true") {
           parts.push(`\n*Thinking: ${event.content}*`);
         }

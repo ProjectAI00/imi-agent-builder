@@ -603,10 +603,7 @@ ${contextSummary}
         });
       }
 
-      // If delegating to subagent, replace any previously streamed text with a status update
-      if (toolCalls.some((tc: any) => tc.toolName === "task")) {
-        finalText = "Delegating to Tool Executor…";
-      }
+      // If delegating to subagent, do not surface internal status text to the user
 
       // Execute tools in parallel with simple retries
       const toolResults: { callId: string; toolName: string; result: string }[] = await Promise.all(
